@@ -9,7 +9,8 @@ const DEFAULT_SESSIONS = [
     energy: 18.20,
     rate: "₹5.62/kWh (BESCOM EV Tariff)",
     cost: 102.28,
-    network: "BESCOM"
+    network: "BESCOM",
+    free: true
   },
   {
     date: "26 Jun 2026, 03:55 PM",
@@ -19,7 +20,8 @@ const DEFAULT_SESSIONS = [
     energy: 23.45,
     rate: "₹5.62/kWh (BESCOM EV Tariff)",
     cost: 131.79,
-    network: "BESCOM"
+    network: "BESCOM",
+    free: true
   },
   {
     date: "03 Jul 2026, 07:29 AM",
@@ -29,7 +31,8 @@ const DEFAULT_SESSIONS = [
     energy: 23.45,
     rate: "₹5.62/kWh (BESCOM EV Tariff)",
     cost: 131.79,
-    network: "BESCOM"
+    network: "BESCOM",
+    free: true
   },
   {
     date: "04 Jul 2026",

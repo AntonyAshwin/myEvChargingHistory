@@ -575,6 +575,14 @@
           <datalist id="networks-list"></datalist>
         </div>
 
+        <div class="form-group">
+          <label class="form-label">Charging Cost</label>
+          <div class="type-toggle">
+            <button type="button" class="type-btn slow active" id="btn-not-free" onclick="setFree(false)">💰 Paid</button>
+            <button type="button" class="type-btn fast" id="btn-free" onclick="setFree(true)">🆓 Free</button>
+          </div>
+        </div>
+
         <div class="form-actions">
           <button type="submit" class="btn-primary" id="btn-save">Save Session</button>
           <div id="btn-delete-wrap" style="display:none">
@@ -605,6 +613,8 @@ let currentFilter = 'all';
 let currentTab = 'overview';
 let editingIndex = -1;
 let selectedType = 'slow';
+let selectedFree = false;
+let excludeFree = false;
 const BATTERY_KWH = 40;
 const charts = {};
 
@@ -680,18 +690,20 @@ function buildOverview() {
   if (charts.running) { charts.running.destroy(); delete charts.running; }
 
   const sorted = sortedSessions();
-  const total = sessions.reduce((s, x) => s + x.cost, 0);
+  const freeSessions = sessions.filter(s => s.free);
+  const paidSessions = excludeFree ? sessions.filter(s => !s.free) : sessions;
+  const total = paidSessions.reduce((s, x) => s + x.cost, 0);
   const totalEnergy = sessions.reduce((s, x) => s + x.energy, 0);
-  const fast = sessions.filter(s => s.type === 'fast');
-  const slow = sessions.filter(s => s.type === 'slow');
+  const fast = paidSessions.filter(s => s.type === 'fast');
+  const slow = paidSessions.filter(s => s.type === 'slow');
   const fastCost = fast.reduce((s, x) => s + x.cost, 0);
   const slowCost = slow.reduce((s, x) => s + x.cost, 0);
-  const fastEnergy = fast.reduce((s, x) => s + x.energy, 0);
-  const slowEnergy = slow.reduce((s, x) => s + x.energy, 0);
+  const fastEnergy = sessions.filter(s => s.type === 'fast').reduce((s, x) => s + x.energy, 0);
+  const slowEnergy = sessions.filter(s => s.type === 'slow').reduce((s, x) => s + x.energy, 0);
 
   // Cheapest / most expensive network
   const netMap = {};
-  sessions.forEach(s => {
+  paidSessions.forEach(s => {
     const n = s.network || 'Unknown';
     if (!netMap[n]) netMap[n] = { cost: 0, energy: 0 };
     netMap[n].cost += s.cost; netMap[n].energy += s.energy;
@@ -720,6 +732,13 @@ function buildOverview() {
   document.getElementById('period-badge').textContent = dr;
 
   document.getElementById('overview-content').innerHTML = `
+    ${freeSessions.length > 0 ? `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;gap:8px;align-items:center">
+      ${excludeFree ? `<span style="font-size:11px;color:var(--muted)">${freeSessions.length} free session${freeSessions.length !== 1 ? 's' : ''} excluded</span>` : ''}
+      <button onclick="toggleFreeFilter()" class="filter-btn${excludeFree ? ' active' : ''}" style="font-size:11px">
+        ${excludeFree ? '🆓 Show Free Costs' : '🆓 Hide Free Costs'}
+      </button>
+    </div>` : ''}
     <div class="grand-total">
       <div class="gt-label">
         <strong>Grand Total</strong>
@@ -867,6 +886,7 @@ function buildSessionCards(filter) {
       </div>
       <div class="session-meta">
         <span class="badge ${typeBadge}">${typeLabel}</span>
+        ${s.free ? '<span class="badge" style="background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3)">🆓 FREE</span>' : ''}
         <span class="badge badge-date">📅 ${s.date}</span>
       </div>
       <div class="soc-wrap">
@@ -1035,9 +1055,11 @@ function openModal(index) {
     document.getElementById('f-rate').value = s.rate || '';
     document.getElementById('f-network').value = s.network || '';
     setType(s.type);
+    setFree(s.free || false);
   } else {
     document.getElementById('session-form').reset();
     setType('slow');
+    setFree(false);
   }
 
   // Populate network suggestions
@@ -1062,6 +1084,17 @@ function setType(type) {
   document.getElementById('btn-fast').classList.toggle('active', type === 'fast');
 }
 
+function setFree(val) {
+  selectedFree = val;
+  document.getElementById('btn-not-free').classList.toggle('active', !val);
+  document.getElementById('btn-free').classList.toggle('active', val);
+}
+
+function toggleFreeFilter() {
+  excludeFree = !excludeFree;
+  buildOverview();
+}
+
 async function handleFormSubmit(e) {
   e.preventDefault();
   const startSoc = parseInt(document.getElementById('f-start').value);
@@ -1075,7 +1108,8 @@ async function handleFormSubmit(e) {
     energy: parseFloat(document.getElementById('f-energy').value),
     cost: parseFloat(document.getElementById('f-cost').value),
     rate: document.getElementById('f-rate').value.trim(),
-    network: document.getElementById('f-network').value.trim()
+    network: document.getElementById('f-network').value.trim(),
+    free: selectedFree
   };
 
   const btn = document.getElementById('btn-save');
