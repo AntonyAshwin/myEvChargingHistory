@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>EV Charging History — Tata Punch EV</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #161b26;
+      --surface2: #1e2535;
+      --border: #2a3347;
+      --fast: #ef4444;
+      --fast-dim: rgba(239,68,68,0.12);
+      --fast-glow: rgba(239,68,68,0.3);
+      --slow: #22c55e;
+      --slow-dim: rgba(34,197,94,0.12);
+      --slow-glow: rgba(34,197,94,0.3);
+      --accent: #3b82f6;
+      --accent-dim: rgba(59,130,246,0.15);
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --gold: #f59e0b;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: linear-gradient(135deg, #1a2540 0%, #0d1a2e 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 16px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-top { display: flex; align-items: center; gap: 12px; }
+    .car-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .header-title { font-size: 17px; font-weight: 700; color: #fff; }
+    .header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .period-badge {
+      margin-left: auto;
+      background: var(--accent-dim);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: #93c5fd;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      flex-shrink: 0;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab.active {
+      color: #93c5fd;
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── SECTIONS ── */
+    .section { display: none; padding: 16px; }
+    .section.active { display: block; }
+
+    /* ── SUMMARY CARDS ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .stat-card.full { grid-column: 1 / -1; }
+    .stat-card.gold { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.05); }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .stat-value { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; }
+    .stat-value.gold-text { color: var(--gold); }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* ── FAST/SLOW SPLIT ── */
+    .split-bar-wrap { margin-bottom: 16px; }
+    .split-bar-labels {
+      display: flex; justify-content: space-between;
+      font-size: 11px; margin-bottom: 6px;
+    }
+    .split-bar {
+      height: 10px; border-radius: 99px;
+      background: var(--surface2);
+      overflow: hidden;
+      display: flex;
+    }
+    .split-bar-fast {
+      height: 100%;
+      background: linear-gradient(90deg, #dc2626, #ef4444);
+      border-radius: 99px 0 0 99px;
+      transition: width 1s;
+    }
+    .split-bar-slow {
+      height: 100%;
+      background: linear-gradient(90deg, #16a34a, #22c55e);
+      border-radius: 0 99px 99px 0;
+    }
+    .label-fast { color: var(--fast); font-weight: 600; }
+    .label-slow { color: var(--slow); font-weight: 600; }
+
+    /* ── CHART CARD ── */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .chart-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 14px; }
+    .chart-wrap { position: relative; width: 100%; }
+
+    /* ── CYCLE CARD ── */
+    .cycle-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .cycle-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .cycle-number { font-size: 36px; font-weight: 900; color: #3b82f6; line-height: 1; }
+    .cycle-unit { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .cycle-badge {
+      background: var(--accent-dim);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: #93c5fd;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 20px;
+    }
+    .cycle-bar-wrap { margin-top: 6px; }
+    .cycle-bar-bg {
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .cycle-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb, #60a5fa);
+      border-radius: 99px;
+      transition: width 1s;
+    }
+    .cycle-info { font-size: 11px; color: var(--muted); }
+    .cycle-note {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: var(--accent-dim);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      font-size: 11px;
+      color: #93c5fd;
+      line-height: 1.5;
+    }
+
+    /* ── SESSION CARDS ── */
+    .session-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .session-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      border-radius: 4px 0 0 4px;
+    }
+    .session-card.fast::before { background: var(--fast); }
+    .session-card.slow::before { background: var(--slow); }
+    .session-card.fast { background: linear-gradient(135deg, #161b26 0%, #1a1218 100%); }
+    .session-card.slow { background: linear-gradient(135deg, #161b26 0%, #101a14 100%); }
+
+    .session-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px; }
+    .session-name { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.3; flex: 1; }
+    .session-cost { font-size: 18px; font-weight: 800; white-space: nowrap; }
+    .session-card.fast .session-cost { color: var(--fast); }
+    .session-card.slow .session-cost { color: var(--slow); }
+
+    .session-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .badge-fast { background: var(--fast-dim); color: var(--fast); border: 1px solid rgba(239,68,68,0.3); }
+    .badge-slow { background: var(--slow-dim); color: var(--slow); border: 1px solid rgba(34,197,94,0.3); }
+    .badge-date { background: var(--accent-dim); color: #93c5fd; border: 1px solid rgba(59,130,246,0.25); }
+
+    /* ── SOC BAR ── */
+    .soc-wrap { margin-bottom: 10px; }
+    .soc-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .soc-bar-bg {
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 99px;
+      position: relative;
+      overflow: visible;
+    }
+    .soc-bar-track {
+      position: absolute;
+      top: 0; height: 100%;
+      border-radius: 99px;
+      transition: all 0.5s;
+    }
+    .session-card.fast .soc-bar-track { background: linear-gradient(90deg, #dc2626, #f87171); }
+    .session-card.slow .soc-bar-track { background: linear-gradient(90deg, #16a34a, #4ade80); }
+
+    /* ── SESSION DETAILS ROW ── */
+    .session-details { display: flex; gap: 8px; flex-wrap: wrap; }
+    .detail-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: var(--text);
+      flex: 1;
+      min-width: 0;
+      text-align: center;
+    }
+    .detail-pill strong { display: block; font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 1px; }
+
+    /* ── RUNNING TOTAL ── */
+    .running-total {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+    .running-label { font-size: 11px; color: var(--muted); }
+    .running-value { font-size: 11px; color: var(--muted); }
+
+    /* ── FILTER ROW ── */
+    .filter-row {
+      display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto;
+      scrollbar-width: none; padding-bottom: 2px;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-btn {
+      flex-shrink: 0;
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn.active { background: var(--accent-dim); border-color: rgba(59,130,246,0.4); color: #93c5fd; }
+    .filter-btn.fast-btn.active { background: var(--fast-dim); border-color: rgba(239,68,68,0.4); color: var(--fast); }
+    .filter-btn.slow-btn.active { background: var(--slow-dim); border-color: rgba(34,197,94,0.4); color: var(--slow); }
+
+    /* ── GRAND TOTAL BANNER ── */
+    .grand-total {
+      background: linear-gradient(135deg, #1a2a1a 0%, #1a1f35 100%);
+      border: 1px solid rgba(245,158,11,0.4);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .gt-label { font-size: 13px; color: var(--muted); }
+    .gt-label strong { display: block; font-size: 15px; font-weight: 700; color: var(--text); }
+    .gt-amount { font-size: 26px; font-weight: 900; color: var(--gold); }
+
+    /* ── RESPONSIVE ── */
+    @media (min-width: 480px) {
+      .stat-grid { grid-template-columns: 1fr 1fr 1fr; }
+      .stat-card.full { grid-column: auto; }
+    }
+
+    /* ── CARD EDIT BUTTON ── */
+    .card-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; cursor: pointer; flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .card-btn:active { background: var(--border); }
+
+    /* ── FAB ── */
+    .fab {
+      position: fixed; bottom: 24px; right: 20px;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: #fff; font-size: 28px; border: none; cursor: pointer;
+      box-shadow: 0 4px 24px rgba(59,130,246,0.5); z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.15s;
+    }
+    .fab:active { transform: scale(0.92); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 300; display: flex; align-items: flex-end;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.25s, visibility 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal-sheet {
+      width: 100%; max-height: 92vh; background: var(--surface);
+      border-radius: 20px 20px 0 0; overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+    .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 0; }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-size: 16px; font-weight: 700; color: #fff; }
+    .modal-close {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--surface2); border: none; color: var(--muted);
+      font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .form-body { padding: 16px 20px 32px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block; font-size: 11px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;
+    }
+    .form-hint { font-size: 10px; color: var(--muted); margin-top: 3px; }
+    .form-input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 14px; padding: 11px 12px;
+      outline: none; -webkit-appearance: none; transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-row { display: flex; gap: 10px; }
+    .form-row .form-group { flex: 1; min-width: 0; }
+    .type-toggle { display: flex; gap: 8px; }
+    .type-btn {
+      flex: 1; padding: 10px 8px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface2);
+      color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .type-btn.slow.active { background: var(--slow-dim); border-color: rgba(34,197,94,0.4); color: var(--slow); }
+    .type-btn.fast.active { background: var(--fast-dim); border-color: rgba(239,68,68,0.4); color: var(--fast); }
+    .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-primary {
+      flex: 1; padding: 13px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-danger-outline {
+      padding: 13px 16px; border-radius: 12px;
+      background: var(--fast-dim); color: var(--fast);
+      border: 1px solid rgba(239,68,68,0.3);
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .delete-confirm {
+      margin-top: 12px; padding: 14px;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.3); border-radius: 12px;
+    }
+    .delete-confirm.hidden { display: none; }
+    .delete-confirm p { font-size: 13px; margin-bottom: 10px; color: var(--text); }
+    .delete-btns { display: flex; gap: 8px; }
+    .btn-confirm-delete {
+      flex: 1; padding: 10px; background: var(--fast); color: #fff;
+      border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .btn-cancel-delete {
+      flex: 1; padding: 10px; background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 10px; font-size: 13px; cursor: pointer;
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 100px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1e293b; border: 1px solid var(--border);
+      color: var(--text); font-size: 13px; font-weight: 500;
+      padding: 10px 20px; border-radius: 99px;
+      opacity: 0; visibility: hidden; transition: all 0.3s;
+      z-index: 400; white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5); pointer-events: none;
+    }
+    .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: rgba(34,197,94,0.4); color: var(--slow); }
+    .toast.error { border-color: rgba(239,68,68,0.4); color: var(--fast); }
+
+    /* ── LOADING ── */
+    .loading-overlay {
+      position: fixed; inset: 0; background: var(--bg); z-index: 500;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; transition: opacity 0.3s;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="car-icon">⚡</div>
+    <div>
+      <div class="header-title">Tata Punch EV</div>
+      <div class="header-sub">40 kWh · Charging History</div>
+    </div>
+    <div class="period-badge" id="period-badge">Jun–Jul 2026</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('overview')">Overview</div>
+  <div class="tab" onclick="showTab('sessions')">Sessions</div>
+  <div class="tab" onclick="showTab('analytics')">Analytics</div>
+</div>
+
+<!-- ══════════════ OVERVIEW TAB ══════════════ -->
+<div class="section active" id="tab-overview">
+  <div id="overview-content"></div>
+</div>
+
+<!-- ══════════════ SESSIONS TAB ══════════════ -->
+<div class="section" id="tab-sessions">
+
+  <div class="filter-row">
+    <button id="filter-all" class="filter-btn active" onclick="filterSessions('all', this)">All (8)</button>
+    <button id="filter-fast" class="filter-btn fast-btn" onclick="filterSessions('fast', this)">⚡ Fast (4)</button>
+    <button id="filter-slow" class="filter-btn slow-btn" onclick="filterSessions('slow', this)">🌿 Slow (4)</button>
+  </div>
+
+  <div id="sessions-list"></div>
+
+</div>
+
+<!-- ══════════════ ANALYTICS TAB ══════════════ -->
+<div class="section" id="tab-analytics">
+  <div id="analytics-content"></div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <div style="color:var(--muted);font-size:13px">Loading sessions…</div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openModal(-1)" title="Add session">+</button>
+
+<!-- MODAL -->
+<div id="modal-overlay" class="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Add Session</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-body">
+      <form id="session-form" onsubmit="handleFormSubmit(event)">
+
+        <div class="form-group">
+          <label class="form-label">Date &amp; Time</label>
+          <input id="f-date" class="form-input" type="text" placeholder="09 Jul 2026, 09:36 PM" required>
+          <div class="form-hint">e.g. "04 Jul 2026" or "09 Jul 2026, 02:41 PM"</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Location / Name</label>
+          <input id="f-name" class="form-input" type="text" placeholder="KSEB Home Slow Charging" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Charging Type</label>
+          <div class="type-toggle">
+            <button type="button" class="type-btn slow active" id="btn-slow" onclick="setType('slow')">🌿 Slow AC</button>
+            <button type="button" class="type-btn fast" id="btn-fast" onclick="setType('fast')">⚡ Fast DC</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Start %</label>
+            <input id="f-start" class="form-input" type="number" min="0" max="100" placeholder="14" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">End %</label>
+            <input id="f-end" class="form-input" type="number" min="0" max="100" placeholder="71" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Energy (kWh)</label>
+            <input id="f-energy" class="form-input" type="number" step="0.001" min="0" placeholder="24.398" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cost (₹)</label>
+            <input id="f-cost" class="form-input" type="number" step="0.01" min="0" placeholder="512.36" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Rate Description <span style="text-transform:none;font-weight:400">(optional)</span></label>
+          <input id="f-rate" class="form-input" type="text" placeholder="₹7.00/kWh (Standard Domestic)">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Network <span style="text-transform:none;font-weight:400">(optional)</span></label>
+          <input id="f-network" class="form-input" type="text" placeholder="KSEB" list="networks-list">
+          <datalist id="networks-list"></datalist>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="btn-save">Save Session</button>
+          <div id="btn-delete-wrap" style="display:none">
+            <button type="button" class="btn-danger-outline" onclick="confirmDelete()">Delete</button>
+          </div>
+        </div>
+
+        <div class="delete-confirm hidden" id="delete-confirm">
+          <p>Delete this session permanently?</p>
+          <div class="delete-btns">
+            <button type="button" class="btn-confirm-delete" onclick="executeDelete()">Yes, Delete</button>
+            <button type="button" class="btn-cancel-delete" onclick="cancelDelete()">Cancel</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────────
+let sessions = [];
+let currentFilter = 'all';
+let currentTab = 'overview';
+let editingIndex = -1;
+let selectedType = 'slow';
+const BATTERY_KWH = 40;
+const charts = {};
+
+Chart.defaults.color = '#64748b';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+Chart.defaults.font.size = 11;
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+loadSessions();
+
+// ── API ────────────────────────────────────────────────────────────────────────
+async function loadSessions() {
+  try {
+    const res = await fetch('/api/sessions');
+    if (!res.ok) throw new Error();
+    sessions = await res.json();
+  } catch {
+    showToast('Failed to load data — check connection', 'error');
+    sessions = [];
+  }
+  hideLoading();
+  renderAll();
+}
+
+async function persistSessions() {
+  const res = await fetch('/api/sessions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(sessions)
+  });
+  if (!res.ok) throw new Error('Save failed');
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────────
+function effRate(s) { return s.energy > 0 ? s.cost / s.energy : 0; }
+
+function shortDate(d) {
+  const m = d.match(/(\d{1,2})\s+(\w{3})/);
+  return m ? `${m[1]} ${m[2]}` : d.slice(0, 6);
+}
+
+function parseDate(d) {
+  const clean = d.split(',')[0].trim();
+  const p = clean.match(/(\d{1,2})\s+(\w{3})\s+(\d{4})/);
+  return p ? new Date(`${p[2]} ${p[1]}, ${p[3]}`) : new Date(clean);
+}
+
+function sortedSessions() {
+  return [...sessions].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+}
+
+function dateRange() {
+  if (!sessions.length) return '';
+  const s = sortedSessions();
+  const am = shortDate(s[0].date).split(' ')[1];
+  const bm = shortDate(s[s.length - 1].date).split(' ')[1];
+  const yr = (s[s.length - 1].date.match(/\d{4}/) || [''])[0];
+  return am === bm ? `${am} ${yr}` : `${am}–${bm} ${yr}`;
+}
+
+function fmt(n) { return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+// ── RENDER ─────────────────────────────────────────────────────────────────────
+function renderAll() {
+  buildOverview();
+  buildSessionCards(currentFilter);
+  updateFilterCounts();
+  if (currentTab === 'analytics') buildAnalyticsCharts();
+}
+
+// ── OVERVIEW ───────────────────────────────────────────────────────────────────
+function buildOverview() {
+  if (charts.running) { charts.running.destroy(); delete charts.running; }
+
+  const sorted = sortedSessions();
+  const total = sessions.reduce((s, x) => s + x.cost, 0);
+  const totalEnergy = sessions.reduce((s, x) => s + x.energy, 0);
+  const fast = sessions.filter(s => s.type === 'fast');
+  const slow = sessions.filter(s => s.type === 'slow');
+  const fastCost = fast.reduce((s, x) => s + x.cost, 0);
+  const slowCost = slow.reduce((s, x) => s + x.cost, 0);
+  const fastEnergy = fast.reduce((s, x) => s + x.energy, 0);
+  const slowEnergy = slow.reduce((s, x) => s + x.energy, 0);
+
+  // Cheapest / most expensive network
+  const netMap = {};
+  sessions.forEach(s => {
+    const n = s.network || 'Unknown';
+    if (!netMap[n]) netMap[n] = { cost: 0, energy: 0 };
+    netMap[n].cost += s.cost; netMap[n].energy += s.energy;
+  });
+  const netRates = Object.entries(netMap)
+    .map(([n, v]) => ({ name: n, rate: v.energy > 0 ? v.cost / v.energy : 0 }))
+    .sort((a, b) => a.rate - b.rate);
+  const cheapest = netRates[0] || { name: '—', rate: 0 };
+  const dearest = netRates[netRates.length - 1] || { name: '—', rate: 0 };
+
+  // Cycles
+  const totalSocGain = sessions.reduce((s, x) => s + (x.endSoc - x.startSoc), 0);
+  const cycles = totalSocGain / 100;
+  const cyclesFrac = cycles % 1;
+  const cyclePct = Math.round(cyclesFrac * 100);
+  const kwhRemaining = ((1 - cyclesFrac) * BATTERY_KWH).toFixed(1);
+
+  const fc = total > 0 ? (fastCost / total * 100).toFixed(1) : '0.0';
+  const sc = total > 0 ? (slowCost / total * 100).toFixed(1) : '0.0';
+  const fe = totalEnergy > 0 ? (fastEnergy / totalEnergy * 100).toFixed(1) : '0.0';
+  const se = totalEnergy > 0 ? (slowEnergy / totalEnergy * 100).toFixed(1) : '0.0';
+  const avgRate = totalEnergy > 0 ? (total / totalEnergy).toFixed(2) : '0.00';
+  const estRange = Math.round(totalEnergy * 9.5);
+  const dr = dateRange();
+
+  document.getElementById('period-badge').textContent = dr;
+
+  document.getElementById('overview-content').innerHTML = `
+    <div class="grand-total">
+      <div class="gt-label">
+        <strong>Grand Total</strong>
+        ${sessions.length} session${sessions.length !== 1 ? 's' : ''} · ${dr}
+      </div>
+      <div class="gt-amount">₹${fmt(total)}</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Total Energy</div><div class="stat-value">${totalEnergy.toFixed(1)}</div><div class="stat-sub">kWh charged</div></div>
+      <div class="stat-card"><div class="stat-label">Sessions</div><div class="stat-value">${sessions.length}</div><div class="stat-sub">total charges</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Cost/kWh</div><div class="stat-value">₹${avgRate}</div><div class="stat-sub">blended rate</div></div>
+      <div class="stat-card"><div class="stat-label">Cheapest</div><div class="stat-value" style="font-size:15px">${cheapest.name}</div><div class="stat-sub">₹${cheapest.rate.toFixed(2)}/kWh</div></div>
+      <div class="stat-card gold"><div class="stat-label">Most Expensive</div><div class="stat-value gold-text" style="font-size:15px">${dearest.name}</div><div class="stat-sub">₹${dearest.rate.toFixed(2)}/kWh</div></div>
+      <div class="stat-card"><div class="stat-label">Range Est.</div><div class="stat-value" style="font-size:15px">~${estRange.toLocaleString('en-IN')}</div><div class="stat-sub">km (@ 9.5 km/kWh)</div></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Cost Split — Fast vs Slow Charging</div>
+      <div class="split-bar-wrap">
+        <div class="split-bar-labels">
+          <span class="label-fast">⚡ Fast ₹${fastCost.toFixed(2)} (${fc}%)</span>
+          <span class="label-slow">🌿 Slow ₹${slowCost.toFixed(2)} (${sc}%)</span>
+        </div>
+        <div class="split-bar">
+          <div class="split-bar-fast" style="width:${fc}%"></div>
+          <div class="split-bar-slow" style="width:${sc}%"></div>
+        </div>
+      </div>
+      <div class="split-bar-wrap" style="margin-top:14px">
+        <div class="chart-title" style="font-size:12px;margin-bottom:8px">Energy Split</div>
+        <div class="split-bar-labels">
+          <span class="label-fast">⚡ ${fastEnergy.toFixed(1)} kWh (${fe}%)</span>
+          <span class="label-slow">🌿 ${slowEnergy.toFixed(1)} kWh (${se}%)</span>
+        </div>
+        <div class="split-bar">
+          <div class="split-bar-fast" style="width:${fe}%"></div>
+          <div class="split-bar-slow" style="width:${se}%"></div>
+        </div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:16px;font-size:11px;color:var(--muted)">
+        <span>⚡ Fast: <strong style="color:var(--fast)">${fast.length}</strong></span>
+        <span>🌿 Slow: <strong style="color:var(--slow)">${slow.length}</strong></span>
+      </div>
+    </div>
+
+    <div class="cycle-card">
+      <div class="cycle-header">
+        <div>
+          <div class="cycle-number">${cycles.toFixed(2)}</div>
+          <div class="cycle-unit">equivalent full cycles</div>
+        </div>
+        <div class="cycle-badge">${BATTERY_KWH} kWh battery</div>
+      </div>
+      <div class="cycle-bar-wrap">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Progress toward next full cycle</div>
+        <div class="cycle-bar-bg"><div class="cycle-bar-fill" style="width:${cyclePct}%"></div></div>
+        <div class="cycle-info">${cyclesFrac.toFixed(2)} of next cycle · ~${kwhRemaining} kWh to go</div>
+      </div>
+      <div class="cycle-note">
+        ℹ️ 1 cycle = 0→100% (${BATTERY_KWH} kWh). Rated ~1,000 cycles — you've used <strong>${(cycles / 10).toFixed(2)}%</strong> of total battery life.
+      </div>
+      <div style="margin-top:12px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text)">Partial cycles by session</div>
+        ${sorted.map(s => {
+          const pct = ((s.endSoc - s.startSoc) / 100).toFixed(2);
+          const bw = Math.min(100, s.endSoc - s.startSoc);
+          return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div style="font-size:10px;color:var(--muted);width:76px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${shortDate(s.date)}</div>
+            <div style="flex:1;height:6px;background:var(--surface2);border-radius:99px;overflow:hidden">
+              <div style="height:100%;width:${bw}%;background:${s.type === 'fast' ? '#ef4444' : '#22c55e'};border-radius:99px"></div>
+            </div>
+            <div style="font-size:11px;font-weight:700;color:${s.type === 'fast' ? 'var(--fast)' : 'var(--slow)'};width:36px;text-align:right">${pct}×</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Running Cost Over Time (₹)</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="runningCostChart"></canvas></div>
+    </div>
+  `;
+
+  if (!sorted.length) return;
+  let running = 0;
+  const runData = sorted.map(s => { running += s.cost; return running; });
+  charts.running = new Chart(document.getElementById('runningCostChart'), {
+    type: 'line',
+    data: {
+      labels: sorted.map(s => shortDate(s.date)),
+      datasets: [{
+        data: runData,
+        borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+        borderWidth: 2.5,
+        pointBackgroundColor: sorted.map(s => s.type === 'fast' ? '#ef4444' : '#22c55e'),
+        pointBorderColor: '#fff', pointBorderWidth: 1.5, pointRadius: 5,
+        fill: true, tension: 0.35
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#1e2535' }, ticks: { maxRotation: 45 } },
+        y: { grid: { color: '#1e2535' }, ticks: { callback: v => '₹' + v.toLocaleString('en-IN') } }
+      }
+    }
+  });
+}
+
+// ── SESSION CARDS ──────────────────────────────────────────────────────────────
+function buildSessionCards(filter) {
+  const list = document.getElementById('sessions-list');
+  const sorted = sortedSessions();
+  const visible = filter === 'all' ? sorted : sorted.filter(s => s.type === filter);
+
+  if (!visible.length) {
+    list.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--muted)">
+      <div style="font-size:48px;margin-bottom:12px">⚡</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text)">No sessions yet</div>
+      <div style="font-size:13px;margin-top:6px">Tap + to add your first charging session</div>
+    </div>`;
+    return;
+  }
+
+  let runAcc = 0;
+  let html = '';
+  sorted.forEach(s => {
+    runAcc += s.cost;
+    if (filter !== 'all' && s.type !== filter) return;
+    const idx = sessions.indexOf(s);
+    const socW = s.endSoc - s.startSoc;
+    const er = effRate(s);
+    const pc = ((s.endSoc - s.startSoc) / 100).toFixed(2);
+    const typeBadge = s.type === 'fast' ? 'badge-fast' : 'badge-slow';
+    const typeLabel = s.type === 'fast' ? '⚡ Fast DC' : '🌿 Slow AC';
+    html += `<div class="session-card ${s.type}">
+      <div class="session-header">
+        <div class="session-name">${s.displayName}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <div class="session-cost">₹${s.cost.toFixed(2)}</div>
+          <button class="card-btn" onclick="openModal(${idx})" title="Edit">✏️</button>
+        </div>
+      </div>
+      <div class="session-meta">
+        <span class="badge ${typeBadge}">${typeLabel}</span>
+        <span class="badge badge-date">📅 ${s.date}</span>
+      </div>
+      <div class="soc-wrap">
+        <div class="soc-labels">
+          <span>Start: <strong>${s.startSoc}%</strong></span>
+          <span style="color:${s.type === 'fast' ? 'var(--fast)' : 'var(--slow)'}">+${s.endSoc - s.startSoc}%</span>
+          <span>End: <strong>${s.endSoc}%</strong></span>
+        </div>
+        <div style="height:10px;border-radius:99px;background:var(--surface2);position:relative">
+          <div style="left:${s.startSoc}%;width:${socW}%;position:absolute;top:0;height:100%;border-radius:99px;background:${s.type === 'fast' ? 'linear-gradient(90deg,#dc2626,#f87171)' : 'linear-gradient(90deg,#16a34a,#4ade80)'}"></div>
+        </div>
+      </div>
+      <div class="session-details">
+        <div class="detail-pill"><strong>${s.energy} kWh</strong>Energy</div>
+        <div class="detail-pill"><strong>₹${er.toFixed(2)}</strong>per kWh</div>
+        <div class="detail-pill"><strong>${pc}×</strong>cycle</div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between">
+        <span>${s.rate || '—'}</span>
+        <span>Running: ₹${runAcc.toFixed(2)}</span>
+      </div>
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+
+function updateFilterCounts() {
+  const f = sessions.filter(s => s.type === 'fast').length;
+  const sl = sessions.filter(s => s.type === 'slow').length;
+  document.getElementById('filter-all').textContent = `All (${sessions.length})`;
+  document.getElementById('filter-fast').textContent = `⚡ Fast (${f})`;
+  document.getElementById('filter-slow').textContent = `🌿 Slow (${sl})`;
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────────
+function showTab(name) {
+  currentTab = name;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'analytics') buildAnalyticsCharts();
+}
+
+// ── FILTER ─────────────────────────────────────────────────────────────────────
+function filterSessions(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildSessionCards(type);
+}
+
+// ── ANALYTICS CHARTS ───────────────────────────────────────────────────────────
+function buildAnalyticsCharts() {
+  ['rate', 'energy', 'soc', 'donut'].forEach(k => {
+    if (charts[k]) { charts[k].destroy(); delete charts[k]; }
+  });
+
+  const sorted = sortedSessions();
+  if (!sorted.length) {
+    document.getElementById('analytics-content').innerHTML =
+      '<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:13px">No data to display</div>';
+    return;
+  }
+
+  const netMap = {};
+  sessions.forEach(s => {
+    const n = s.network || 'Unknown';
+    if (!netMap[n]) netMap[n] = { cost: 0, energy: 0, type: s.type };
+    netMap[n].cost += s.cost; netMap[n].energy += s.energy;
+  });
+  const nets = Object.entries(netMap)
+    .map(([n, v]) => ({ name: n, rate: v.energy > 0 ? v.cost / v.energy : 0, cost: v.cost, type: v.type }))
+    .sort((a, b) => a.rate - b.rate);
+  const netColors = nets.map(n => n.type === 'slow' ? '#22c55e' : '#ef4444');
+  const donutPalette = ['#22c55e', '#4ade80', '#3b82f6', '#f97316', '#ef4444', '#a855f7', '#eab308', '#06b6d4'];
+
+  const fast = sessions.filter(s => s.type === 'fast');
+  const slow = sessions.filter(s => s.type === 'slow');
+  const fastCost = fast.reduce((s, x) => s + x.cost, 0);
+  const slowCost = slow.reduce((s, x) => s + x.cost, 0);
+  const fastE = fast.reduce((s, x) => s + x.energy, 0);
+  const slowE = slow.reduce((s, x) => s + x.energy, 0);
+  const fastRate = fastE > 0 ? fastCost / fastE : 0;
+  const slowRate = slowE > 0 ? slowCost / slowE : 0;
+  const ratio = slowRate > 0 ? (fastRate / slowRate).toFixed(1) : '—';
+  const totalCost = fastCost + slowCost;
+
+  document.getElementById('analytics-content').innerHTML = `
+    <div class="chart-card">
+      <div class="chart-title">Cost per kWh by Network (₹/kWh eff.)</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="rateChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Energy Charged per Session (kWh)</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="energyChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">SOC Increase per Session (%)</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="socChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Cost Breakdown by Network</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="donutChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Fast vs Slow — Head to Head</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <tr style="color:var(--muted);font-size:11px;text-transform:uppercase">
+          <td style="padding:6px 0">Metric</td>
+          <td style="text-align:center;padding:6px 4px;color:var(--fast)">⚡ Fast</td>
+          <td style="text-align:center;padding:6px 4px;color:var(--slow)">🌿 Slow</td>
+        </tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0;color:var(--muted)">Sessions</td><td style="text-align:center;color:var(--fast);font-weight:700">${fast.length}</td><td style="text-align:center;color:var(--slow);font-weight:700">${slow.length}</td></tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0;color:var(--muted)">Total Cost</td><td style="text-align:center;color:var(--fast);font-weight:700">₹${fastCost.toFixed(2)}</td><td style="text-align:center;color:var(--slow);font-weight:700">₹${slowCost.toFixed(2)}</td></tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0;color:var(--muted)">Energy</td><td style="text-align:center;color:var(--fast);font-weight:700">${fastE.toFixed(1)} kWh</td><td style="text-align:center;color:var(--slow);font-weight:700">${slowE.toFixed(1)} kWh</td></tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0;color:var(--muted)">Avg ₹/kWh</td><td style="text-align:center;color:var(--fast);font-weight:700">₹${fastRate.toFixed(2)}</td><td style="text-align:center;color:var(--slow);font-weight:700">₹${slowRate.toFixed(2)}</td></tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0;color:var(--muted)">Cost Ratio</td><td colspan="2" style="text-align:center;font-weight:700"><span style="color:var(--fast)">Fast is ${ratio}×</span> <span style="color:var(--muted)">more expensive</span></td></tr>
+      </table>
+    </div>
+  `;
+
+  charts.rate = new Chart(document.getElementById('rateChart'), {
+    type: 'bar',
+    data: { labels: nets.map(n => n.name), datasets: [{ data: nets.map(n => n.rate), backgroundColor: netColors, borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#1e2535' }, ticks: { callback: v => '₹' + v.toFixed(0) } } } }
+  });
+
+  charts.energy = new Chart(document.getElementById('energyChart'), {
+    type: 'bar',
+    data: { labels: sorted.map(s => shortDate(s.date)), datasets: [{ data: sorted.map(s => s.energy), backgroundColor: sorted.map(s => s.type === 'fast' ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)'), borderColor: sorted.map(s => s.type === 'fast' ? '#ef4444' : '#22c55e'), borderWidth: 1.5, borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' kWh' } } }, scales: { x: { grid: { display: false }, ticks: { maxRotation: 45 } }, y: { grid: { color: '#1e2535' }, ticks: { callback: v => v + ' kWh' } } } }
+  });
+
+  charts.soc = new Chart(document.getElementById('socChart'), {
+    type: 'bar',
+    data: { labels: sorted.map(s => shortDate(s.date)), datasets: [{ data: sorted.map(s => s.endSoc - s.startSoc), backgroundColor: sorted.map(s => s.type === 'fast' ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)'), borderColor: sorted.map(s => s.type === 'fast' ? '#ef4444' : '#22c55e'), borderWidth: 1.5, borderRadius: 6, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '+' + ctx.raw + '%' } } }, scales: { x: { grid: { display: false }, ticks: { maxRotation: 45 } }, y: { grid: { color: '#1e2535' }, ticks: { callback: v => v + '%' } } } }
+  });
+
+  charts.donut = new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: { labels: nets.map(n => n.name), datasets: [{ data: nets.map(n => n.cost), backgroundColor: donutPalette.slice(0, nets.length), borderColor: '#161b26', borderWidth: 3, hoverOffset: 8 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true, pointStyleWidth: 8 } }, tooltip: { callbacks: { label: ctx => `₹${ctx.raw.toFixed(2)} (${totalCost > 0 ? ((ctx.raw / totalCost) * 100).toFixed(1) : 0}%)` } } } }
+  });
+}
+
+// ── MODAL ──────────────────────────────────────────────────────────────────────
+function openModal(index) {
+  editingIndex = index;
+  const isEdit = index >= 0;
+  document.getElementById('modal-title').textContent = isEdit ? 'Edit Session' : 'Add Session';
+  document.getElementById('btn-delete-wrap').style.display = isEdit ? 'block' : 'none';
+  document.getElementById('delete-confirm').classList.add('hidden');
+  document.getElementById('btn-save').disabled = false;
+  document.getElementById('btn-save').textContent = 'Save Session';
+
+  if (isEdit) {
+    const s = sessions[index];
+    document.getElementById('f-date').value = s.date;
+    document.getElementById('f-name').value = s.displayName;
+    document.getElementById('f-start').value = s.startSoc;
+    document.getElementById('f-end').value = s.endSoc;
+    document.getElementById('f-energy').value = s.energy;
+    document.getElementById('f-cost').value = s.cost;
+    document.getElementById('f-rate').value = s.rate || '';
+    document.getElementById('f-network').value = s.network || '';
+    setType(s.type);
+  } else {
+    document.getElementById('session-form').reset();
+    setType('slow');
+  }
+
+  // Populate network suggestions
+  const nets = [...new Set(sessions.map(s => s.network).filter(Boolean))];
+  document.getElementById('networks-list').innerHTML = nets.map(n => `<option value="${n}">`).join('');
+
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-date').focus(), 350);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+function setType(type) {
+  selectedType = type;
+  document.getElementById('btn-slow').classList.toggle('active', type === 'slow');
+  document.getElementById('btn-fast').classList.toggle('active', type === 'fast');
+}
+
+async function handleFormSubmit(e) {
+  e.preventDefault();
+  const startSoc = parseInt(document.getElementById('f-start').value);
+  const endSoc = parseInt(document.getElementById('f-end').value);
+  if (endSoc < startSoc) { showToast('End % must be ≥ Start %', 'error'); return; }
+
+  const session = {
+    date: document.getElementById('f-date').value.trim(),
+    displayName: document.getElementById('f-name').value.trim(),
+    type: selectedType, startSoc, endSoc,
+    energy: parseFloat(document.getElementById('f-energy').value),
+    cost: parseFloat(document.getElementById('f-cost').value),
+    rate: document.getElementById('f-rate').value.trim(),
+    network: document.getElementById('f-network').value.trim()
+  };
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const prev = [...sessions];
+  if (editingIndex === -1) { sessions.push(session); } else { sessions[editingIndex] = session; }
+
+  try {
+    await persistSessions();
+    closeModal();
+    renderAll();
+    showToast(editingIndex === -1 ? 'Session added ✓' : 'Session updated ✓', 'success');
+  } catch {
+    sessions = prev;
+    showToast('Save failed — check connection', 'error');
+    btn.disabled = false; btn.textContent = 'Save Session';
+  }
+}
+
+function confirmDelete() { document.getElementById('delete-confirm').classList.remove('hidden'); }
+function cancelDelete() { document.getElementById('delete-confirm').classList.add('hidden'); }
+
+async function executeDelete() {
+  const prev = [...sessions];
+  sessions.splice(editingIndex, 1);
+  closeModal();
+  try {
+    await persistSessions();
+    renderAll();
+    showToast('Session deleted', 'success');
+  } catch {
+    sessions = prev;
+    showToast('Delete failed — check connection', 'error');
+  }
+}
+
+// ── TOAST ──────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── LOADING ────────────────────────────────────────────────────────────────────
+function hideLoading() {
+  const el = document.getElementById('loading-overlay');
+  el.style.opacity = '0';
+  setTimeout(() => el.style.display = 'none', 300);
+}
+</script>
+</body>
+</html>
