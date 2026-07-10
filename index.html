@@ -891,7 +891,7 @@ function buildSessionCards(filter) {
         </div>
       </div>
       <div class="session-meta">
-        <span class="badge ${typeBadge}">${typeLabel}</span>
+        ${s.chargerKw ? `<span class="badge ${typeBadge}">${s.chargerKw} kW</span>` : `<span class="badge ${typeBadge}">${typeLabel}</span>`}
         ${s.free ? '<span class="badge" style="background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3)">🆓 FREE</span>' : ''}
         <span class="badge badge-date">📅 ${s.date}</span>
       </div>
@@ -909,7 +909,6 @@ function buildSessionCards(filter) {
         <div class="detail-pill"><strong>${s.energy} kWh</strong>Energy</div>
         <div class="detail-pill"><strong>₹${er.toFixed(2)}</strong>per kWh</div>
         <div class="detail-pill"><strong>${pc}×</strong>cycle</div>
-        ${s.chargerKw ? `<div class="detail-pill"><strong>${s.chargerKw} kW</strong>Charger</div>` : ''}
       </div>
       <div style="margin-top:8px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between">
         <span>${s.rate || '—'}</span>
