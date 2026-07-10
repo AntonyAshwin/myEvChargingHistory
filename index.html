@@ -565,6 +565,12 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">Charger Power (kW) <span style="text-transform:none;font-weight:400">(optional)</span></label>
+          <input id="f-charger-kw" class="form-input" type="number" step="0.1" min="0" placeholder="e.g. 60, 7.6, 3.3">
+          <div class="form-hint">Max power of the charger used</div>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Rate Description <span style="text-transform:none;font-weight:400">(optional)</span></label>
           <input id="f-rate" class="form-input" type="text" placeholder="₹7.00/kWh (Standard Domestic)">
         </div>
@@ -903,6 +909,7 @@ function buildSessionCards(filter) {
         <div class="detail-pill"><strong>${s.energy} kWh</strong>Energy</div>
         <div class="detail-pill"><strong>₹${er.toFixed(2)}</strong>per kWh</div>
         <div class="detail-pill"><strong>${pc}×</strong>cycle</div>
+        ${s.chargerKw ? `<div class="detail-pill"><strong>${s.chargerKw} kW</strong>Charger</div>` : ''}
       </div>
       <div style="margin-top:8px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between">
         <span>${s.rate || '—'}</span>
@@ -1054,6 +1061,7 @@ function openModal(index) {
     document.getElementById('f-cost').value = s.cost;
     document.getElementById('f-rate').value = s.rate || '';
     document.getElementById('f-network').value = s.network || '';
+    document.getElementById('f-charger-kw').value = s.chargerKw || '';
     setType(s.type);
     setFree(s.free || false);
   } else {
@@ -1109,6 +1117,7 @@ async function handleFormSubmit(e) {
     cost: parseFloat(document.getElementById('f-cost').value),
     rate: document.getElementById('f-rate').value.trim(),
     network: document.getElementById('f-network').value.trim(),
+    chargerKw: parseFloat(document.getElementById('f-charger-kw').value) || null,
     free: selectedFree
   };
 

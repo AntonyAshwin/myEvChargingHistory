@@ -10,6 +10,7 @@ const DEFAULT_SESSIONS = [
     rate: "₹5.62/kWh (BESCOM EV Tariff)",
     cost: 102.28,
     network: "BESCOM",
+    chargerKw: 7.6,
     free: true
   },
   {
@@ -21,6 +22,7 @@ const DEFAULT_SESSIONS = [
     rate: "₹5.62/kWh (BESCOM EV Tariff)",
     cost: 131.79,
     network: "BESCOM",
+    chargerKw: 7.6,
     free: true
   },
   {
@@ -32,6 +34,7 @@ const DEFAULT_SESSIONS = [
     rate: "₹5.62/kWh (BESCOM EV Tariff)",
     cost: 131.79,
     network: "BESCOM",
+    chargerKw: 3.3,
     free: true
   },
   {
@@ -42,7 +45,8 @@ const DEFAULT_SESSIONS = [
     energy: 20.29,
     rate: "₹27.50/kWh + 18% GST",
     cost: 658.42,
-    network: "Zeon"
+    network: "Zeon",
+    chargerKw: 60
   },
   {
     date: "04 Jul 2026",
@@ -52,7 +56,8 @@ const DEFAULT_SESSIONS = [
     energy: 1.16,
     rate: "₹27.50/kWh + 18% GST",
     cost: 37.64,
-    network: "Zeon"
+    network: "Zeon",
+    chargerKw: 60
   },
   {
     date: "04 Jul 2026",
@@ -62,7 +67,8 @@ const DEFAULT_SESSIONS = [
     energy: 18.59,
     rate: "₹18.00/kWh + 18% GST",
     cost: 394.85,
-    network: "ESYGO"
+    network: "ESYGO",
+    chargerKw: 60
   },
   {
     date: "09 Jul 2026, 02:41 PM",
@@ -72,7 +78,8 @@ const DEFAULT_SESSIONS = [
     energy: 24.398,
     rate: "Final Transaction Amount",
     cost: 512.36,
-    network: "Tata.ev"
+    network: "Tata.ev",
+    chargerKw: 60
   },
   {
     date: "09 Jul 2026, 09:36 PM",
@@ -82,7 +89,8 @@ const DEFAULT_SESSIONS = [
     energy: 18.55,
     rate: "₹7.00/kWh (Standard Domestic)",
     cost: 129.85,
-    network: "KSEB"
+    network: "KSEB",
+    chargerKw: 3.3
   }
 ];
 
