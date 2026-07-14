@@ -430,6 +430,41 @@
       border: 1px solid var(--border); border-radius: 10px; font-size: 13px; cursor: pointer;
     }
 
+    /* ── MODAL MODE TOGGLE ── */
+    .modal-mode-toggle {
+      display: flex; gap: 0; margin: 0 20px 0;
+      border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    }
+    .modal-mode-btn {
+      flex: 1; padding: 8px 12px; background: var(--surface2);
+      border: none; color: var(--muted); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .modal-mode-btn:first-child { border-right: 1px solid var(--border); }
+    .modal-mode-btn.active { background: var(--accent-dim); color: #93c5fd; }
+
+    /* ── JSON IMPORT PANEL ── */
+    .json-panel { padding: 16px 20px 32px; display: none; }
+    .json-panel.active { display: block; }
+    .form-body.hidden { display: none; }
+    .json-textarea {
+      width: 100%; min-height: 220px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace;
+      padding: 12px; outline: none; resize: vertical; line-height: 1.5;
+      transition: border-color 0.2s;
+    }
+    .json-textarea:focus { border-color: var(--accent); }
+    .json-preview {
+      margin-top: 12px; padding: 10px 12px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; font-size: 12px; color: var(--muted);
+      display: none;
+    }
+    .json-preview.visible { display: block; }
+    .json-preview.ok { border-color: rgba(34,197,94,0.4); color: var(--slow); }
+    .json-preview.err { border-color: rgba(239,68,68,0.4); color: var(--fast); }
+
     /* ── TOAST ── */
     .toast {
       position: fixed; bottom: 100px; left: 50%;
@@ -520,13 +555,24 @@
       <span class="modal-title" id="modal-title">Add Session</span>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    <div class="form-body">
+    <div class="modal-mode-toggle" id="modal-mode-toggle" style="margin-top:12px">
+      <button class="modal-mode-btn active" id="btn-mode-form" onclick="setModalMode('form')">✏️ Form</button>
+      <button class="modal-mode-btn" id="btn-mode-json" onclick="setModalMode('json')">{ } Paste JSON</button>
+    </div>
+    <div class="form-body" id="form-body">
       <form id="session-form" onsubmit="handleFormSubmit(event)">
 
         <div class="form-group">
           <label class="form-label">Date &amp; Time</label>
-          <input id="f-date" class="form-input" type="text" placeholder="09 Jul 2026, 09:36 PM" required>
-          <div class="form-hint">e.g. "04 Jul 2026" or "09 Jul 2026, 02:41 PM"</div>
+          <div class="form-row" style="margin-bottom:0">
+            <div class="form-group" style="margin-bottom:0">
+              <input id="f-date" class="form-input" type="date" required>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <input id="f-time" class="form-input" type="time">
+              <div class="form-hint">Optional</div>
+            </div>
+          </div>
         </div>
 
         <div class="form-group">
@@ -606,6 +652,19 @@
 
       </form>
     </div>
+
+    <!-- JSON IMPORT PANEL -->
+    <div class="json-panel" id="json-panel">
+      <div class="form-group">
+        <label class="form-label">Paste JSON Array</label>
+        <textarea id="json-input" class="json-textarea" placeholder='[&#10;  {&#10;    "date": "2026-07-09",&#10;    "time": "14:41",&#10;    "vector_element": "Tata.ev Hyson motors Thrissur",&#10;    "type": "public_paid",&#10;    "start_percentage": 14,&#10;    "end_percentage": 71,&#10;    "energy_kwh": 24.398,&#10;    "unit_cost_metrics": "₹21.00/kWh base",&#10;    "absolute_cost_inr": 512.36&#10;  }&#10;]' oninput="previewJson()"></textarea>
+        <div class="form-hint" style="margin-top:6px">Supports both single object <code>{…}</code> and array <code>[…]</code>. Fields: date, time, vector_element, type (office/home/public_paid), start_percentage, end_percentage, energy_kwh, unit_cost_metrics, absolute_cost_inr</div>
+      </div>
+      <div class="json-preview" id="json-preview"></div>
+      <div class="form-actions" style="margin-top:16px">
+        <button type="button" class="btn-primary" id="btn-json-import" onclick="importJson()" disabled>Import Sessions</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -637,12 +696,44 @@ async function loadSessions() {
     const res = await fetch('/api/sessions');
     if (!res.ok) throw new Error();
     sessions = await res.json();
+    const migrated = migrateSessions(sessions);
+    if (migrated) await persistSessions();
   } catch {
     showToast('Failed to load data — check connection', 'error');
     sessions = [];
   }
   hideLoading();
   renderAll();
+}
+
+// Migrate old "23 Jun 2026, 02:16 PM" date strings to {date:"2026-06-23", time:"14:16"}
+function migrateSessions(arr) {
+  const MONTHS = {Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+  let changed = false;
+  arr.forEach(s => {
+    if (s.date && s.date.includes(' ')) {
+      // Old format detected
+      const m = s.date.match(/(\d{1,2})\s+(\w{3})\s+(\d{4})(?:,\s*(\d{1,2}):(\d{2})\s*(AM|PM))?/i);
+      if (m) {
+        const dd = String(parseInt(m[1])).padStart(2,'0');
+        const mm = String(MONTHS[m[2]] || 1).padStart(2,'0');
+        const yyyy = m[3];
+        s.date = `${yyyy}-${mm}-${dd}`;
+        if (m[4]) {
+          let h = parseInt(m[4]);
+          const min = m[5];
+          const ampm = m[6].toUpperCase();
+          if (ampm === 'PM' && h !== 12) h += 12;
+          if (ampm === 'AM' && h === 12) h = 0;
+          s.time = `${String(h).padStart(2,'0')}:${min}`;
+        } else {
+          s.time = s.time || null;
+        }
+        changed = true;
+      }
+    }
+  });
+  return changed;
 }
 
 async function persistSessions() {
@@ -657,15 +748,33 @@ async function persistSessions() {
 // ── HELPERS ────────────────────────────────────────────────────────────────────
 function effRate(s) { return s.energy > 0 ? s.cost / s.energy : 0; }
 
-function shortDate(d) {
-  const m = d.match(/(\d{1,2})\s+(\w{3})/);
-  return m ? `${m[1]} ${m[2]}` : d.slice(0, 6);
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// "2026-06-23" → "23 Jun 2026"
+function isoToDisplay(dateStr) {
+  const [y, m, d] = dateStr.split('-');
+  return `${parseInt(d)} ${MONTH_NAMES[parseInt(m)-1]} ${y}`;
 }
 
-function parseDate(d) {
-  const clean = d.split(',')[0].trim();
-  const p = clean.match(/(\d{1,2})\s+(\w{3})\s+(\d{4})/);
-  return p ? new Date(`${p[2]} ${p[1]}, ${p[3]}`) : new Date(clean);
+// "2026-06-23" → "23 Jun" (short)
+function shortDate(dateStr) {
+  const [, m, d] = dateStr.split('-');
+  return `${parseInt(d)} ${MONTH_NAMES[parseInt(m)-1]}`;
+}
+
+// "14:16" → "2:16 PM"
+function formatTime(timeStr) {
+  if (!timeStr) return null;
+  const [hh, mm] = timeStr.split(':');
+  const h = parseInt(hh);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${mm} ${ampm}`;
+}
+
+// ISO date → JS Date for sorting
+function parseDate(dateStr) {
+  return new Date(dateStr);
 }
 
 function sortedSessions() {
@@ -675,9 +784,9 @@ function sortedSessions() {
 function dateRange() {
   if (!sessions.length) return '';
   const s = sortedSessions();
-  const am = shortDate(s[0].date).split(' ')[1];
-  const bm = shortDate(s[s.length - 1].date).split(' ')[1];
-  const yr = (s[s.length - 1].date.match(/\d{4}/) || [''])[0];
+  const am = MONTH_NAMES[parseInt(s[0].date.split('-')[1])-1];
+  const bm = MONTH_NAMES[parseInt(s[s.length-1].date.split('-')[1])-1];
+  const yr = s[s.length-1].date.split('-')[0];
   return am === bm ? `${am} ${yr}` : `${am}–${bm} ${yr}`;
 }
 
@@ -893,7 +1002,7 @@ function buildSessionCards(filter) {
       <div class="session-meta">
         ${s.chargerKw ? `<span class="badge ${typeBadge}">${s.chargerKw} kW</span>` : `<span class="badge ${typeBadge}">${typeLabel}</span>`}
         ${s.free ? '<span class="badge" style="background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3)">🆓 FREE</span>' : ''}
-        <span class="badge badge-date">📅 ${s.date}</span>
+        <span class="badge badge-date">📅 ${isoToDisplay(s.date)}</span>
       </div>
       <div class="soc-wrap">
         <div class="soc-labels">
@@ -909,6 +1018,7 @@ function buildSessionCards(filter) {
         <div class="detail-pill"><strong>${s.energy} kWh</strong>Energy</div>
         <div class="detail-pill"><strong>₹${er.toFixed(2)}</strong>per kWh</div>
         <div class="detail-pill"><strong>${pc}×</strong>cycle</div>
+        ${s.time ? `<div class="detail-pill"><strong>${formatTime(s.time)}</strong>Time</div>` : ''}
       </div>
       <div style="margin-top:8px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between">
         <span>${s.rate || '—'}</span>
@@ -1050,9 +1160,19 @@ function openModal(index) {
   document.getElementById('btn-save').disabled = false;
   document.getElementById('btn-save').textContent = 'Save Session';
 
+  // JSON mode only available for new sessions
+  document.getElementById('modal-mode-toggle').style.display = isEdit ? 'none' : 'flex';
+  setModalMode('form');
+  document.getElementById('json-input').value = '';
+  document.getElementById('json-preview').className = 'json-preview';
+  document.getElementById('btn-json-import').disabled = true;
+  document.getElementById('btn-json-import').textContent = 'Import Sessions';
+  document.getElementById('btn-json-import')._parsed = null;
+
   if (isEdit) {
     const s = sessions[index];
     document.getElementById('f-date').value = s.date;
+    document.getElementById('f-time').value = s.time || '';
     document.getElementById('f-name').value = s.displayName;
     document.getElementById('f-start').value = s.startSoc;
     document.getElementById('f-end').value = s.endSoc;
@@ -1109,7 +1229,8 @@ async function handleFormSubmit(e) {
   if (endSoc < startSoc) { showToast('End % must be ≥ Start %', 'error'); return; }
 
   const session = {
-    date: document.getElementById('f-date').value.trim(),
+    date: document.getElementById('f-date').value,
+    time: document.getElementById('f-time').value || null,
     displayName: document.getElementById('f-name').value.trim(),
     type: selectedType, startSoc, endSoc,
     energy: parseFloat(document.getElementById('f-energy').value),
@@ -1163,6 +1284,95 @@ function showToast(msg, type = 'success') {
   t.className = `toast ${type} show`;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── MODAL MODE ─────────────────────────────────────────────────────────────────
+let modalMode = 'form';
+
+function setModalMode(mode) {
+  modalMode = mode;
+  document.getElementById('btn-mode-form').classList.toggle('active', mode === 'form');
+  document.getElementById('btn-mode-json').classList.toggle('active', mode === 'json');
+  document.getElementById('form-body').classList.toggle('hidden', mode === 'json');
+  document.getElementById('json-panel').classList.toggle('active', mode === 'json');
+  if (mode === 'json') {
+    setTimeout(() => document.getElementById('json-input').focus(), 50);
+  }
+}
+
+// ── JSON IMPORT ────────────────────────────────────────────────────────────────
+// charger_type_kwh ≤ 7.6 → slow AC, > 7.6 → fast DC
+function mapJsonSession(raw) {
+  const kw = raw.charger_type_kwh || null;
+  const speedType = (kw && kw > 7.6) ? 'fast' : 'slow';
+  const isFree = raw.type === 'unpaid';
+  return {
+    date: raw.date,
+    time: raw.time || null,
+    displayName: raw.vector_element || '',
+    type: speedType,
+    startSoc: raw.start_percentage,
+    endSoc: raw.end_percentage,
+    energy: raw.energy_kwh,
+    cost: raw.absolute_cost_inr,
+    rate: raw.unit_cost_metrics || '',
+    network: null,
+    chargerKw: kw,
+    free: isFree
+  };
+}
+
+function previewJson() {
+  const raw = document.getElementById('json-input').value.trim();
+  const preview = document.getElementById('json-preview');
+  const btn = document.getElementById('btn-json-import');
+
+  if (!raw) {
+    preview.className = 'json-preview';
+    btn.disabled = true;
+    return;
+  }
+
+  try {
+    let parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) parsed = [parsed];
+    const valid = parsed.filter(r => r.date && r.vector_element && r.energy_kwh != null && r.absolute_cost_inr != null);
+    if (!valid.length) throw new Error('No valid sessions found');
+    preview.className = 'json-preview visible ok';
+    preview.textContent = `✓ ${valid.length} session${valid.length !== 1 ? 's' : ''} ready to import`;
+    btn.disabled = false;
+    btn._parsed = valid;
+  } catch (err) {
+    preview.className = 'json-preview visible err';
+    preview.textContent = `✗ ${err.message}`;
+    btn.disabled = true;
+    btn._parsed = null;
+  }
+}
+
+async function importJson() {
+  const btn = document.getElementById('btn-json-import');
+  const toImport = btn._parsed;
+  if (!toImport || !toImport.length) return;
+
+  const mapped = toImport.map(mapJsonSession);
+  const prev = [...sessions];
+  sessions.push(...mapped);
+
+  btn.disabled = true;
+  btn.textContent = 'Importing…';
+
+  try {
+    await persistSessions();
+    closeModal();
+    renderAll();
+    showToast(`${mapped.length} session${mapped.length !== 1 ? 's' : ''} imported ✓`, 'success');
+  } catch {
+    sessions = prev;
+    showToast('Import failed — check connection', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Import Sessions';
+  }
 }
 
 // ── LOADING ────────────────────────────────────────────────────────────────────

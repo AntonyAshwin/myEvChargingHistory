@@ -2,95 +2,67 @@ import { getStore } from "@netlify/blobs";
 
 const DEFAULT_SESSIONS = [
   {
-    date: "23 Jun 2026, 02:16 PM",
+    date: "2026-06-23", time: "14:16",
     displayName: "SAP Devanahalli Office Charging",
-    type: "slow",
-    startSoc: 34, endSoc: 86,
-    energy: 18.20,
-    rate: "₹5.62/kWh (BESCOM EV Tariff)",
-    cost: 102.28,
-    network: "BESCOM",
-    chargerKw: 7.6,
-    free: true
+    type: "slow", startSoc: 34, endSoc: 86,
+    energy: 18.20, rate: "₹5.62/kWh (BESCOM EV Tariff)", cost: 102.28,
+    network: "BESCOM", chargerKw: 7.6, free: true
   },
   {
-    date: "26 Jun 2026, 03:55 PM",
+    date: "2026-06-26", time: "15:55",
     displayName: "SAP Whitefield Office Charging",
-    type: "slow",
-    startSoc: 28, endSoc: 95,
-    energy: 23.45,
-    rate: "₹5.62/kWh (BESCOM EV Tariff)",
-    cost: 131.79,
-    network: "BESCOM",
-    chargerKw: 7.6,
-    free: true
+    type: "slow", startSoc: 28, endSoc: 95,
+    energy: 23.45, rate: "₹5.62/kWh (BESCOM EV Tariff)", cost: 131.79,
+    network: "BESCOM", chargerKw: 7.6, free: true
   },
   {
-    date: "03 Jul 2026, 07:29 AM",
+    date: "2026-07-03", time: "07:29",
     displayName: "SAP Whitefield Office Charging",
-    type: "slow",
-    startSoc: 33, endSoc: 100,
-    energy: 23.45,
-    rate: "₹5.62/kWh (BESCOM EV Tariff)",
-    cost: 131.79,
-    network: "BESCOM",
-    chargerKw: 3.3,
-    free: true
+    type: "slow", startSoc: 33, endSoc: 100,
+    energy: 23.45, rate: "₹5.62/kWh (BESCOM EV Tariff)", cost: 131.79,
+    network: "BESCOM", chargerKw: 3.3, free: true
   },
   {
-    date: "04 Jul 2026",
+    date: "2026-07-04", time: null,
     displayName: "Zeon Charging (Session A)",
-    type: "fast",
-    startSoc: 33, endSoc: 81,
-    energy: 20.29,
-    rate: "₹27.50/kWh + 18% GST",
-    cost: 658.42,
-    network: "Zeon",
-    chargerKw: 60
+    type: "fast", startSoc: 33, endSoc: 81,
+    energy: 20.29, rate: "₹27.50/kWh + 18% GST", cost: 658.42,
+    network: "Zeon", chargerKw: 60, free: false
   },
   {
-    date: "04 Jul 2026",
+    date: "2026-07-04", time: null,
     displayName: "Zeon Charging (Session B)",
-    type: "fast",
-    startSoc: 81, endSoc: 84,
-    energy: 1.16,
-    rate: "₹27.50/kWh + 18% GST",
-    cost: 37.64,
-    network: "Zeon",
-    chargerKw: 60
+    type: "fast", startSoc: 81, endSoc: 84,
+    energy: 1.16, rate: "₹27.50/kWh + 18% GST", cost: 37.64,
+    network: "Zeon", chargerKw: 60, free: false
   },
   {
-    date: "04 Jul 2026",
+    date: "2026-07-04", time: null,
     displayName: "ESYGO Charging",
-    type: "fast",
-    startSoc: 34, endSoc: 79,
-    energy: 18.59,
-    rate: "₹18.00/kWh + 18% GST",
-    cost: 394.85,
-    network: "ESYGO",
-    chargerKw: 60
+    type: "fast", startSoc: 34, endSoc: 79,
+    energy: 18.59, rate: "₹18.00/kWh + 18% GST", cost: 394.85,
+    network: "ESYGO", chargerKw: 30, free: false
   },
   {
-    date: "09 Jul 2026, 02:41 PM",
+    date: "2026-07-09", time: "14:41",
     displayName: "Tata.ev Hyson motors Thrissur",
-    type: "fast",
-    startSoc: 14, endSoc: 71,
-    energy: 24.398,
-    rate: "Final Transaction Amount",
-    cost: 512.36,
-    network: "Tata.ev",
-    chargerKw: 60
+    type: "fast", startSoc: 14, endSoc: 71,
+    energy: 24.398, rate: "₹21.00/kWh base (Final Transaction)", cost: 512.36,
+    network: "Tata.ev", chargerKw: 25, free: false
   },
   {
-    date: "09 Jul 2026, 09:36 PM",
+    date: "2026-07-09", time: "21:36",
     displayName: "KSEB Home Slow Charging",
-    type: "slow",
-    startSoc: 47, endSoc: 100,
-    energy: 18.55,
-    rate: "₹7.00/kWh (Standard Domestic)",
-    cost: 129.85,
-    network: "KSEB",
-    chargerKw: 3.3
+    type: "slow", startSoc: 47, endSoc: 100,
+    energy: 18.55, rate: "₹7.00/kWh (Standard Domestic)", cost: 129.85,
+    network: "KSEB", chargerKw: 3.3, free: false
+  },
+  {
+    date: "2026-07-11", time: "23:25",
+    displayName: "KSEB Home Slow Charging",
+    type: "slow", startSoc: 72, endSoc: 100,
+    energy: 9.80, rate: "₹7.00/kWh (Standard Domestic)", cost: 68.60,
+    network: "KSEB", chargerKw: 3.3, free: false
   }
 ];
 
