@@ -680,6 +680,8 @@ let editingIndex = -1;
 let selectedType = 'slow';
 let selectedFree = false;
 let excludeFree = false;
+let sessionsPage = 1;
+const SESSIONS_PER_PAGE = 5;
 const BATTERY_KWH = 40;
 const charts = {};
 
@@ -778,12 +780,16 @@ function parseDate(dateStr) {
 }
 
 function sortedSessions() {
+  return [...sessions].sort((a, b) => parseDate(b.date) - parseDate(a.date));
+}
+
+function sortedSessionsAsc() {
   return [...sessions].sort((a, b) => parseDate(a.date) - parseDate(b.date));
 }
 
 function dateRange() {
   if (!sessions.length) return '';
-  const s = sortedSessions();
+  const s = sortedSessionsAsc();
   const am = MONTH_NAMES[parseInt(s[0].date.split('-')[1])-1];
   const bm = MONTH_NAMES[parseInt(s[s.length-1].date.split('-')[1])-1];
   const yr = s[s.length-1].date.split('-')[0];
@@ -804,7 +810,7 @@ function renderAll() {
 function buildOverview() {
   if (charts.running) { charts.running.destroy(); delete charts.running; }
 
-  const sorted = sortedSessions();
+  const sorted = sortedSessionsAsc();
   const freeSessions = sessions.filter(s => s.free);
   const paidSessions = excludeFree ? sessions.filter(s => !s.free) : sessions;
   const total = paidSessions.reduce((s, x) => s + x.cost, 0);
@@ -968,7 +974,7 @@ function buildOverview() {
 // ── SESSION CARDS ──────────────────────────────────────────────────────────────
 function buildSessionCards(filter) {
   const list = document.getElementById('sessions-list');
-  const sorted = sortedSessions();
+  const sorted = sortedSessions(); // newest first
   const visible = filter === 'all' ? sorted : sorted.filter(s => s.type === filter);
 
   if (!visible.length) {
@@ -980,17 +986,29 @@ function buildSessionCards(filter) {
     return;
   }
 
+  const totalPages = Math.ceil(visible.length / SESSIONS_PER_PAGE);
+  if (sessionsPage > totalPages) sessionsPage = totalPages;
+  const pageItems = visible.slice((sessionsPage - 1) * SESSIONS_PER_PAGE, sessionsPage * SESSIONS_PER_PAGE);
+
+  // Running total is always cumulative oldest→newest, so compute on full asc list
+  const asc = sortedSessionsAsc();
+  const runMap = {};
+  let acc = 0;
+  asc.forEach(s => { acc += s.cost; runMap[asc.indexOf(s)] = acc; });
+  // Map by identity using a WeakMap-style via sessions index
+  const runByIdx = new Map();
   let runAcc = 0;
+  sortedSessionsAsc().forEach(s => { runAcc += s.cost; runByIdx.set(s, runAcc); });
+
   let html = '';
-  sorted.forEach(s => {
-    runAcc += s.cost;
-    if (filter !== 'all' && s.type !== filter) return;
+  pageItems.forEach(s => {
     const idx = sessions.indexOf(s);
     const socW = s.endSoc - s.startSoc;
     const er = effRate(s);
     const pc = ((s.endSoc - s.startSoc) / 100).toFixed(2);
     const typeBadge = s.type === 'fast' ? 'badge-fast' : 'badge-slow';
     const typeLabel = s.type === 'fast' ? '⚡ Fast DC' : '🌿 Slow AC';
+    const runningTotal = runByIdx.get(s) || 0;
     html += `<div class="session-card ${s.type}">
       <div class="session-header">
         <div class="session-name">${s.displayName}</div>
@@ -1022,10 +1040,18 @@ function buildSessionCards(filter) {
       </div>
       <div style="margin-top:8px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between">
         <span>${s.rate || '—'}</span>
-        <span>Running: ₹${runAcc.toFixed(2)}</span>
+        <span>Running: ₹${runningTotal.toFixed(2)}</span>
       </div>
     </div>`;
   });
+
+  // Pagination controls
+  html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:0 2px">
+    <button onclick="changePage(-1)" class="filter-btn" ${sessionsPage <= 1 ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>← Prev</button>
+    <span style="font-size:12px;color:var(--muted)">Page ${sessionsPage} of ${totalPages} · ${visible.length} sessions</span>
+    <button onclick="changePage(1)" class="filter-btn" ${sessionsPage >= totalPages ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>Next →</button>
+  </div>`;
+
   list.innerHTML = html;
 }
 
@@ -1047,9 +1073,16 @@ function showTab(name) {
   if (name === 'analytics') buildAnalyticsCharts();
 }
 
+function changePage(dir) {
+  sessionsPage += dir;
+  buildSessionCards(currentFilter);
+  document.getElementById('tab-sessions').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 // ── FILTER ─────────────────────────────────────────────────────────────────────
 function filterSessions(type, btn) {
   currentFilter = type;
+  sessionsPage = 1;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   buildSessionCards(type);
@@ -1061,7 +1094,7 @@ function buildAnalyticsCharts() {
     if (charts[k]) { charts[k].destroy(); delete charts[k]; }
   });
 
-  const sorted = sortedSessions();
+  const sorted = sortedSessionsAsc();
   if (!sorted.length) {
     document.getElementById('analytics-content').innerHTML =
       '<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:13px">No data to display</div>';
