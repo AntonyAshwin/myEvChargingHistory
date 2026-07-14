@@ -779,12 +779,21 @@ function parseDate(dateStr) {
   return new Date(dateStr);
 }
 
+function cmpDateTime(a, b, asc) {
+  const d = parseDate(a.date) - parseDate(b.date);
+  if (d !== 0) return asc ? d : -d;
+  // same date — sort by time (null time sorts last)
+  const at = a.time || '99:99';
+  const bt = b.time || '99:99';
+  return asc ? at.localeCompare(bt) : bt.localeCompare(at);
+}
+
 function sortedSessions() {
-  return [...sessions].sort((a, b) => parseDate(b.date) - parseDate(a.date));
+  return [...sessions].sort((a, b) => cmpDateTime(a, b, false));
 }
 
 function sortedSessionsAsc() {
-  return [...sessions].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+  return [...sessions].sort((a, b) => cmpDateTime(a, b, true));
 }
 
 function dateRange() {
