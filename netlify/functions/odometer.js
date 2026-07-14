@@ -8,7 +8,7 @@ export default async (req) => {
   if (req.method === "GET") {
     const val = await store.get("odometer", { type: "json" });
     return Response.json({ odometer: val ?? DEFAULT_ODO }, {
-      headers: { "Cache-Control": "no-store" }
+      headers: { "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" }
     });
   }
 

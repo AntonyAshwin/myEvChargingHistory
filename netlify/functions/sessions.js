@@ -76,7 +76,7 @@ export default async (req) => {
       await store.setJSON("sessions", data);
     }
     return Response.json(data, {
-      headers: { "Cache-Control": "no-store" }
+      headers: { "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" }
     });
   }
 
