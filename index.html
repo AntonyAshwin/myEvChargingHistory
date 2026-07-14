@@ -849,9 +849,9 @@ function buildOverview() {
   document.getElementById('overview-content').innerHTML = `
     ${freeSessions.length > 0 ? `
     <div style="display:flex;justify-content:flex-end;margin-bottom:10px;gap:8px;align-items:center">
-      ${excludeFree ? `<span style="font-size:11px;color:var(--muted)">${freeSessions.length} free session${freeSessions.length !== 1 ? 's' : ''} excluded</span>` : ''}
+      ${excludeFree ? `<span style="font-size:11px;color:var(--muted)">${freeSessions.length} unpaid session${freeSessions.length !== 1 ? 's' : ''} excluded</span>` : ''}
       <button onclick="toggleFreeFilter()" class="filter-btn${excludeFree ? ' active' : ''}" style="font-size:11px">
-        ${excludeFree ? '🆓 Show Free Costs' : '🆓 Hide Free Costs'}
+        ${excludeFree ? '🌐 Show All' : '💰 Paid Only'}
       </button>
     </div>` : ''}
     <div class="grand-total">
