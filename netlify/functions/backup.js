@@ -12,15 +12,19 @@ export default async () => {
     return new Response("GITHUB_TOKEN not set", { status: 500 });
   }
 
-  // Read current sessions from Blobs
+  // Read current sessions and odometer from Blobs
   const store = getStore("ev-charging");
-  const sessions = await store.get("sessions", { type: "json" });
+  const [sessions, odoValue] = await Promise.all([
+    store.get("sessions", { type: "json" }),
+    store.get("odometer", { type: "json" })
+  ]);
   if (!sessions) {
     console.log("backup: no sessions to back up");
     return new Response("no data", { status: 200 });
   }
 
-  const content = Buffer.from(JSON.stringify(sessions, null, 2)).toString("base64");
+  const payload = { odometer: odoValue ?? 1980, sessions };
+  const content = Buffer.from(JSON.stringify(payload, null, 2)).toString("base64");
   const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`;
   const headers = {
     Authorization: `Bearer ${token}`,
@@ -61,7 +65,7 @@ export default async () => {
     return new Response("GitHub PUT failed", { status: 502 });
   }
 
-  console.log(`backup: pushed ${sessions.length} sessions to GitHub at ${now}`);
+  console.log(`backup: pushed ${sessions.length} sessions + odometer to GitHub at ${now}`);
   return new Response("ok", { status: 200 });
 };
 

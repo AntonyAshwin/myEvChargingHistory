@@ -112,6 +112,40 @@
     }
     .stat-card.full { grid-column: 1 / -1; }
     .stat-card.gold { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.05); }
+    .stat-card.green { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.05); }
+
+    /* ── ODO CARD ── */
+    .odo-card {
+      background: linear-gradient(135deg, #1a1f35 0%, #0d1a2e 100%);
+      border: 1px solid rgba(59,130,246,0.35);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .odo-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .odo-value { font-size: 26px; font-weight: 900; color: #93c5fd; line-height: 1; }
+    .odo-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .odo-edit-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 12px;
+      color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .odo-edit-btn:active { background: var(--border); }
+    .odo-input-wrap { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+    .odo-input {
+      width: 100px; background: var(--surface2); border: 1px solid var(--accent);
+      border-radius: 8px; color: var(--text); font-size: 16px; font-weight: 700;
+      padding: 6px 10px; outline: none; -webkit-appearance: none; appearance: none;
+    }
+    .odo-save-btn {
+      background: var(--accent); border: none; border-radius: 8px;
+      color: #fff; font-size: 12px; font-weight: 700; padding: 7px 12px; cursor: pointer;
+    }
     .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .stat-value { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; }
     .stat-value.gold-text { color: var(--gold); }
@@ -680,6 +714,7 @@ let editingIndex = -1;
 let selectedType = 'slow';
 let selectedFree = false;
 let excludeFree = false;
+let odometer = parseInt(localStorage.getItem('ev-odo') || '1980'); // cache; overwritten by API on load
 let loadedCount = 5;
 const SESSIONS_PER_PAGE = 5;
 const BATTERY_KWH = 40;
@@ -695,11 +730,19 @@ loadSessions();
 // ── API ────────────────────────────────────────────────────────────────────────
 async function loadSessions() {
   try {
-    const res = await fetch('/api/sessions');
-    if (!res.ok) throw new Error();
-    sessions = await res.json();
+    const [sessRes, odoRes] = await Promise.all([
+      fetch('/api/sessions'),
+      fetch('/api/odometer')
+    ]);
+    if (!sessRes.ok) throw new Error();
+    sessions = await sessRes.json();
     const migrated = migrateSessions(sessions);
     if (migrated) await persistSessions();
+    if (odoRes.ok) {
+      const odoData = await odoRes.json();
+      odometer = odoData.odometer;
+      localStorage.setItem('ev-odo', odometer);
+    }
   } catch {
     showToast('Failed to load data — check connection', 'error');
     sessions = [];
@@ -878,13 +921,26 @@ function buildOverview() {
       <div class="gt-amount">₹${fmt(total)}</div>
     </div>
 
+    <div class="odo-card" id="odo-card">
+      <div>
+        <div class="odo-label">Odometer</div>
+        <div class="odo-value" id="odo-display">${odometer.toLocaleString('en-IN')} km</div>
+        <div class="odo-sub">current reading</div>
+      </div>
+      <button class="odo-edit-btn" id="odo-edit-btn" onclick="startOdoEdit()">✏️ Edit</button>
+      <div class="odo-input-wrap" id="odo-input-wrap" style="display:none">
+        <input class="odo-input" id="odo-input" type="number" min="0" value="${odometer}" onkeydown="if(event.key==='Enter')saveOdo()">
+        <button class="odo-save-btn" onclick="saveOdo()">Save</button>
+      </div>
+    </div>
+
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-label">Total Energy</div><div class="stat-value">${totalEnergy.toFixed(1)}</div><div class="stat-sub">kWh charged</div></div>
       <div class="stat-card"><div class="stat-label">Sessions</div><div class="stat-value">${sessions.length}</div><div class="stat-sub">total charges</div></div>
       <div class="stat-card"><div class="stat-label">Avg Cost/kWh</div><div class="stat-value">₹${avgRate}</div><div class="stat-sub">blended rate</div></div>
       <div class="stat-card"><div class="stat-label">Range Est.</div><div class="stat-value" style="font-size:15px">~${estRange.toLocaleString('en-IN')}</div><div class="stat-sub">km (@ 9.5 km/kWh)</div></div>
       <div class="stat-card gold"><div class="stat-label">Most Expensive</div><div class="stat-value gold-text" style="font-size:15px">${dearest.name}</div><div class="stat-sub">₹${dearest.rate.toFixed(2)}/kWh</div></div>
-      <div class="stat-card"><div class="stat-label">Cheapest</div><div class="stat-value" style="font-size:15px">${cheapest.name}</div><div class="stat-sub">₹${cheapest.rate.toFixed(2)}/kWh</div></div>
+      <div class="stat-card green"><div class="stat-label">Cheapest</div><div class="stat-value" style="font-size:15px;color:var(--slow)">${cheapest.name}</div><div class="stat-sub">₹${cheapest.rate.toFixed(2)}/kWh</div></div>
     </div>
 
     <div class="chart-card">
@@ -1417,6 +1473,32 @@ async function importJson() {
     btn.disabled = false;
     btn.textContent = 'Import Sessions';
   }
+}
+
+// ── ODOMETER ───────────────────────────────────────────────────────────────────
+function startOdoEdit() {
+  document.getElementById('odo-edit-btn').style.display = 'none';
+  document.getElementById('odo-input-wrap').style.display = 'flex';
+  const inp = document.getElementById('odo-input');
+  inp.value = odometer;
+  inp.focus();
+  inp.select();
+}
+
+function saveOdo() {
+  const val = parseInt(document.getElementById('odo-input').value);
+  if (!isNaN(val) && val >= 0) {
+    odometer = val;
+    localStorage.setItem('ev-odo', val);
+    document.getElementById('odo-display').textContent = val.toLocaleString('en-IN') + ' km';
+    fetch('/api/odometer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ odometer: val })
+    }).catch(() => showToast('Odo save failed — check connection', 'error'));
+  }
+  document.getElementById('odo-edit-btn').style.display = '';
+  document.getElementById('odo-input-wrap').style.display = 'none';
 }
 
 // ── LOADING ────────────────────────────────────────────────────────────────────
