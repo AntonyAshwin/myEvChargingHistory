@@ -680,7 +680,7 @@ let editingIndex = -1;
 let selectedType = 'slow';
 let selectedFree = false;
 let excludeFree = false;
-let sessionsPage = 1;
+let loadedCount = 5;
 const SESSIONS_PER_PAGE = 5;
 const BATTERY_KWH = 40;
 const charts = {};
@@ -809,6 +809,7 @@ function fmt(n) { return n.toLocaleString('en-IN', { minimumFractionDigits: 2, m
 
 // ── RENDER ─────────────────────────────────────────────────────────────────────
 function renderAll() {
+  loadedCount = SESSIONS_PER_PAGE;
   buildOverview();
   buildSessionCards(currentFilter);
   updateFilterCounts();
@@ -995,22 +996,14 @@ function buildSessionCards(filter) {
     return;
   }
 
-  const totalPages = Math.ceil(visible.length / SESSIONS_PER_PAGE);
-  if (sessionsPage > totalPages) sessionsPage = totalPages;
-  const pageItems = visible.slice((sessionsPage - 1) * SESSIONS_PER_PAGE, sessionsPage * SESSIONS_PER_PAGE);
-
-  // Running total is always cumulative oldest→newest, so compute on full asc list
-  const asc = sortedSessionsAsc();
-  const runMap = {};
-  let acc = 0;
-  asc.forEach(s => { acc += s.cost; runMap[asc.indexOf(s)] = acc; });
-  // Map by identity using a WeakMap-style via sessions index
   const runByIdx = new Map();
   let runAcc = 0;
   sortedSessionsAsc().forEach(s => { runAcc += s.cost; runByIdx.set(s, runAcc); });
 
-  let html = '';
-  pageItems.forEach(s => {
+  const toShow = visible.slice(0, loadedCount);
+  const hasMore = loadedCount < visible.length;
+
+  function cardHtml(s) {
     const idx = sessions.indexOf(s);
     const socW = s.endSoc - s.startSoc;
     const er = effRate(s);
@@ -1018,7 +1011,7 @@ function buildSessionCards(filter) {
     const typeBadge = s.type === 'fast' ? 'badge-fast' : 'badge-slow';
     const typeLabel = s.type === 'fast' ? '⚡ Fast DC' : '🌿 Slow AC';
     const runningTotal = runByIdx.get(s) || 0;
-    html += `<div class="session-card ${s.type}">
+    return `<div class="session-card ${s.type}">
       <div class="session-header">
         <div class="session-name">${s.displayName}</div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
@@ -1052,16 +1045,25 @@ function buildSessionCards(filter) {
         <span>Running: ₹${runningTotal.toFixed(2)}</span>
       </div>
     </div>`;
-  });
+  }
 
-  // Pagination controls
-  html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:0 2px">
-    <button onclick="changePage(-1)" class="filter-btn" ${sessionsPage <= 1 ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>← Prev</button>
-    <span style="font-size:12px;color:var(--muted)">Page ${sessionsPage} of ${totalPages} · ${visible.length} sessions</span>
-    <button onclick="changePage(1)" class="filter-btn" ${sessionsPage >= totalPages ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>Next →</button>
-  </div>`;
+  list.innerHTML = toShow.map(cardHtml).join('') +
+    `<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0">
+       Showing ${toShow.length} of ${visible.length}
+     </div>` +
+    (hasMore ? `<div id="scroll-sentinel" style="height:1px"></div>` : '');
 
-  list.innerHTML = html;
+  if (hasMore) {
+    const sentinel = document.getElementById('scroll-sentinel');
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        obs.disconnect();
+        loadedCount += SESSIONS_PER_PAGE;
+        buildSessionCards(currentFilter);
+      }
+    }, { rootMargin: '200px' });
+    obs.observe(sentinel);
+  }
 }
 
 function updateFilterCounts() {
@@ -1091,7 +1093,7 @@ function changePage(dir) {
 // ── FILTER ─────────────────────────────────────────────────────────────────────
 function filterSessions(type, btn) {
   currentFilter = type;
-  sessionsPage = 1;
+  loadedCount = SESSIONS_PER_PAGE;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   buildSessionCards(type);
