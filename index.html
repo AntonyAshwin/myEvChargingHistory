@@ -67,6 +67,17 @@
       border-radius: 20px;
       white-space: nowrap;
     }
+    .role-badge {
+      background: rgba(100,116,139,0.15);
+      border: 1px solid rgba(100,116,139,0.3);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
 
     /* ── TABS ── */
     .tabs {
@@ -126,25 +137,7 @@
       justify-content: space-between;
       gap: 12px;
     }
-    .odo-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
     .odo-value { font-size: 26px; font-weight: 900; color: #93c5fd; line-height: 1; }
-    .odo-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
-    .odo-edit-btn {
-      background: transparent; border: none;
-      color: var(--muted); font-size: 11px; cursor: pointer;
-      padding: 0; text-decoration: underline; text-underline-offset: 2px;
-    }
-    .odo-edit-btn:active { color: var(--text); }
-    .odo-input-wrap { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-    .odo-input {
-      width: 100px; background: var(--surface2); border: 1px solid var(--accent);
-      border-radius: 8px; color: var(--text); font-size: 16px; font-weight: 700;
-      padding: 6px 10px; outline: none; -webkit-appearance: none; appearance: none;
-    }
-    .odo-save-btn {
-      background: var(--accent); border: none; border-radius: 8px;
-      color: #fff; font-size: 12px; font-weight: 700; padding: 7px 12px; cursor: pointer;
-    }
     .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .stat-value { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; }
     .stat-value.gold-text { color: var(--gold); }
@@ -276,21 +269,6 @@
     /* ── SOC BAR ── */
     .soc-wrap { margin-bottom: 10px; }
     .soc-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-    .soc-bar-bg {
-      height: 8px;
-      background: var(--surface2);
-      border-radius: 99px;
-      position: relative;
-      overflow: visible;
-    }
-    .soc-bar-track {
-      position: absolute;
-      top: 0; height: 100%;
-      border-radius: 99px;
-      transition: all 0.5s;
-    }
-    .session-card.fast .soc-bar-track { background: linear-gradient(90deg, #dc2626, #f87171); }
-    .session-card.slow .soc-bar-track { background: linear-gradient(90deg, #16a34a, #4ade80); }
 
     /* ── SESSION DETAILS ROW ── */
     .session-details { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -306,15 +284,6 @@
       text-align: center;
     }
     .detail-pill strong { display: block; font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 1px; }
-
-    /* ── RUNNING TOTAL ── */
-    .running-total {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 10px;
-    }
-    .running-label { font-size: 11px; color: var(--muted); }
-    .running-value { font-size: 11px; color: var(--muted); }
 
     /* ── FILTER ROW ── */
     .filter-row {
@@ -367,7 +336,7 @@
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
         gap: 0;
-        height: calc(100vh - 73px); /* viewport minus header */
+        height: calc(100vh - 73px);
         overflow: hidden;
       }
 
@@ -392,159 +361,7 @@
         padding-bottom: 10px;
         border-bottom: 1px solid var(--border);
       }
-
-      /* modal centers on desktop instead of bottom sheet */
-      .modal-overlay { align-items: center; justify-content: center; }
-      .modal-sheet {
-        width: 480px; max-height: 88vh;
-        border-radius: 16px;
-        transform: scale(0.95);
-        transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
-      }
-      .modal-overlay.open .modal-sheet { transform: scale(1); }
-
-      /* FAB repositions to sessions column — roughly center-right */
-      .fab { bottom: 28px; right: calc(33.33% + 20px); }
     }
-
-    /* ── CARD EDIT BUTTON ── */
-    .card-btn {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; width: 32px; height: 32px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; cursor: pointer; flex-shrink: 0;
-      transition: background 0.15s;
-    }
-    .card-btn:active { background: var(--border); }
-
-    /* ── FAB ── */
-    .fab {
-      position: fixed; bottom: 24px; right: 20px;
-      width: 56px; height: 56px; border-radius: 50%;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      color: #fff; font-size: 28px; border: none; cursor: pointer;
-      box-shadow: 0 4px 24px rgba(59,130,246,0.5); z-index: 200;
-      display: flex; align-items: center; justify-content: center;
-      transition: transform 0.15s;
-    }
-    .fab:active { transform: scale(0.92); }
-
-    /* ── MODAL ── */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
-      z-index: 300; display: flex; align-items: flex-end;
-      opacity: 0; visibility: hidden;
-      transition: opacity 0.25s, visibility 0.25s;
-    }
-    .modal-overlay.open { opacity: 1; visibility: visible; }
-    .modal-sheet {
-      width: 100%; max-height: 92vh; background: var(--surface);
-      border-radius: 20px 20px 0 0; overflow-y: auto;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .modal-overlay.open .modal-sheet { transform: translateY(0); }
-    .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 0; }
-    .modal-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 20px; border-bottom: 1px solid var(--border);
-    }
-    .modal-title { font-size: 16px; font-weight: 700; color: #fff; }
-    .modal-close {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: var(--surface2); border: none; color: var(--muted);
-      font-size: 18px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .form-body { padding: 16px 20px 32px; }
-    .form-group { margin-bottom: 14px; }
-    .form-label {
-      display: block; font-size: 11px; font-weight: 600; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;
-    }
-    .form-hint { font-size: 10px; color: var(--muted); margin-top: 3px; }
-    .form-input {
-      width: 100%; background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; color: var(--text); font-size: 14px; padding: 11px 12px;
-      outline: none; -webkit-appearance: none; transition: border-color 0.2s;
-    }
-    .form-input:focus { border-color: var(--accent); }
-    .form-row { display: flex; gap: 10px; }
-    .form-row .form-group { flex: 1; min-width: 0; }
-    .type-toggle { display: flex; gap: 8px; }
-    .type-btn {
-      flex: 1; padding: 10px 8px; border-radius: 10px;
-      border: 1px solid var(--border); background: var(--surface2);
-      color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer;
-      transition: all 0.2s;
-    }
-    .type-btn.slow.active { background: var(--slow-dim); border-color: rgba(34,197,94,0.4); color: var(--slow); }
-    .type-btn.fast.active { background: var(--fast-dim); border-color: rgba(239,68,68,0.4); color: var(--fast); }
-    .form-actions { display: flex; gap: 10px; margin-top: 20px; }
-    .btn-primary {
-      flex: 1; padding: 13px; border: none; border-radius: 12px;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
-      transition: opacity 0.2s;
-    }
-    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-danger-outline {
-      padding: 13px 16px; border-radius: 12px;
-      background: var(--fast-dim); color: var(--fast);
-      border: 1px solid rgba(239,68,68,0.3);
-      font-size: 14px; font-weight: 600; cursor: pointer;
-    }
-    .delete-confirm {
-      margin-top: 12px; padding: 14px;
-      background: rgba(239,68,68,0.08);
-      border: 1px solid rgba(239,68,68,0.3); border-radius: 12px;
-    }
-    .delete-confirm.hidden { display: none; }
-    .delete-confirm p { font-size: 13px; margin-bottom: 10px; color: var(--text); }
-    .delete-btns { display: flex; gap: 8px; }
-    .btn-confirm-delete {
-      flex: 1; padding: 10px; background: var(--fast); color: #fff;
-      border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer;
-    }
-    .btn-cancel-delete {
-      flex: 1; padding: 10px; background: var(--surface2); color: var(--text);
-      border: 1px solid var(--border); border-radius: 10px; font-size: 13px; cursor: pointer;
-    }
-
-    /* ── MODAL MODE TOGGLE ── */
-    .modal-mode-toggle {
-      display: flex; gap: 0; margin: 0 20px 0;
-      border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
-    }
-    .modal-mode-btn {
-      flex: 1; padding: 8px 12px; background: var(--surface2);
-      border: none; color: var(--muted); font-size: 12px; font-weight: 600;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .modal-mode-btn:first-child { border-right: 1px solid var(--border); }
-    .modal-mode-btn.active { background: var(--accent-dim); color: #93c5fd; }
-
-    /* ── JSON IMPORT PANEL ── */
-    .json-panel { padding: 16px 20px 32px; display: none; }
-    .json-panel.active { display: block; }
-    .form-body.hidden { display: none; }
-    .json-textarea {
-      width: 100%; min-height: 220px; background: var(--surface2);
-      border: 1px solid var(--border); border-radius: 10px;
-      color: var(--text); font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace;
-      padding: 12px; outline: none; resize: vertical; line-height: 1.5;
-      transition: border-color 0.2s;
-    }
-    .json-textarea:focus { border-color: var(--accent); }
-    .json-preview {
-      margin-top: 12px; padding: 10px 12px;
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; font-size: 12px; color: var(--muted);
-      display: none;
-    }
-    .json-preview.visible { display: block; }
-    .json-preview.ok { border-color: rgba(34,197,94,0.4); color: var(--slow); }
-    .json-preview.err { border-color: rgba(239,68,68,0.4); color: var(--fast); }
 
     /* ── TOAST ── */
     .toast {
@@ -558,7 +375,6 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.5); pointer-events: none;
     }
     .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-    .toast.success { border-color: rgba(34,197,94,0.4); color: var(--slow); }
     .toast.error { border-color: rgba(239,68,68,0.4); color: var(--fast); }
 
     /* ── LOADING ── */
@@ -586,6 +402,7 @@
       <div class="header-sub">40 kWh · Charging History</div>
     </div>
     <div class="period-badge" id="period-badge">Jun–Jul 2026</div>
+    <div class="role-badge">Viewer</div>
   </div>
 </div>
 
@@ -632,144 +449,18 @@
   <div style="color:var(--muted);font-size:13px">Loading sessions…</div>
 </div>
 
-<!-- FAB -->
-<button class="fab" onclick="openModal(-1)" title="Add session">+</button>
-
-<!-- MODAL -->
-<div id="modal-overlay" class="modal-overlay" onclick="handleOverlayClick(event)">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <span class="modal-title" id="modal-title">Add Session</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-mode-toggle" id="modal-mode-toggle" style="margin-top:12px">
-      <button class="modal-mode-btn active" id="btn-mode-form" onclick="setModalMode('form')">✏️ Form</button>
-      <button class="modal-mode-btn" id="btn-mode-json" onclick="setModalMode('json')">{ } Paste JSON</button>
-    </div>
-    <div class="form-body" id="form-body">
-      <form id="session-form" onsubmit="handleFormSubmit(event)">
-
-        <div class="form-group">
-          <label class="form-label">Date &amp; Time</label>
-          <div class="form-row" style="margin-bottom:0">
-            <div class="form-group" style="margin-bottom:0">
-              <input id="f-date" class="form-input" type="date" required>
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <input id="f-time" class="form-input" type="time">
-              <div class="form-hint">Optional</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Location / Name</label>
-          <input id="f-name" class="form-input" type="text" placeholder="KSEB Home Slow Charging" required>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Charging Type</label>
-          <div class="type-toggle">
-            <button type="button" class="type-btn slow active" id="btn-slow" onclick="setType('slow')">🌿 Slow AC</button>
-            <button type="button" class="type-btn fast" id="btn-fast" onclick="setType('fast')">⚡ Fast DC</button>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Start %</label>
-            <input id="f-start" class="form-input" type="number" min="0" max="100" placeholder="14" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">End %</label>
-            <input id="f-end" class="form-input" type="number" min="0" max="100" placeholder="71" required>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Energy (kWh)</label>
-            <input id="f-energy" class="form-input" type="number" step="0.001" min="0" placeholder="24.398" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Cost (₹)</label>
-            <input id="f-cost" class="form-input" type="number" step="0.01" min="0" placeholder="512.36" required>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Charger Power (kW) <span style="text-transform:none;font-weight:400">(optional)</span></label>
-          <input id="f-charger-kw" class="form-input" type="number" step="0.1" min="0" placeholder="e.g. 60, 7.6, 3.3">
-          <div class="form-hint">Max power of the charger used</div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Rate Description <span style="text-transform:none;font-weight:400">(optional)</span></label>
-          <input id="f-rate" class="form-input" type="text" placeholder="₹7.00/kWh (Standard Domestic)">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Network <span style="text-transform:none;font-weight:400">(optional)</span></label>
-          <input id="f-network" class="form-input" type="text" placeholder="KSEB" list="networks-list">
-          <datalist id="networks-list"></datalist>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Charging Cost</label>
-          <div class="type-toggle">
-            <button type="button" class="type-btn slow active" id="btn-not-free" onclick="setFree(false)">💰 Paid</button>
-            <button type="button" class="type-btn fast" id="btn-free" onclick="setFree(true)">🆓 Free</button>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="btn-primary" id="btn-save">Save Session</button>
-          <div id="btn-delete-wrap" style="display:none">
-            <button type="button" class="btn-danger-outline" onclick="confirmDelete()">Delete</button>
-          </div>
-        </div>
-
-        <div class="delete-confirm hidden" id="delete-confirm">
-          <p>Delete this session permanently?</p>
-          <div class="delete-btns">
-            <button type="button" class="btn-confirm-delete" onclick="executeDelete()">Yes, Delete</button>
-            <button type="button" class="btn-cancel-delete" onclick="cancelDelete()">Cancel</button>
-          </div>
-        </div>
-
-      </form>
-    </div>
-
-    <!-- JSON IMPORT PANEL -->
-    <div class="json-panel" id="json-panel">
-      <div class="form-group">
-        <label class="form-label">Paste JSON Array</label>
-        <textarea id="json-input" class="json-textarea" placeholder='[&#10;  {&#10;    "date": "2026-07-09",&#10;    "time": "14:41",&#10;    "vector_element": "Tata.ev Hyson motors Thrissur",&#10;    "type": "public_paid",&#10;    "start_percentage": 14,&#10;    "end_percentage": 71,&#10;    "energy_kwh": 24.398,&#10;    "unit_cost_metrics": "₹21.00/kWh base",&#10;    "absolute_cost_inr": 512.36&#10;  }&#10;]' oninput="previewJson()"></textarea>
-        <div class="form-hint" style="margin-top:6px">Supports both single object <code>{…}</code> and array <code>[…]</code>. Fields: date, time, vector_element, type (office/home/public_paid), start_percentage, end_percentage, energy_kwh, unit_cost_metrics, absolute_cost_inr</div>
-      </div>
-      <div class="json-preview" id="json-preview"></div>
-      <div class="form-actions" style="margin-top:16px">
-        <button type="button" class="btn-primary" id="btn-json-import" onclick="importJson()" disabled>Import Sessions</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
 
 <script>
+const API_BASE = 'https://myevh.netlify.app';
+
 // ── STATE ──────────────────────────────────────────────────────────────────────
 let sessions = [];
 let currentFilter = 'all';
 let currentTab = 'overview';
-let editingIndex = -1;
-let selectedType = 'slow';
-let selectedFree = false;
 let excludeFree = false;
-let odometer = parseInt(localStorage.getItem('ev-odo') || '1980'); // cache; overwritten by API on load
-let adminToken = '';
+let odometer = parseInt(localStorage.getItem('ev-odo') || '1980');
 let loadedCount = 5;
 const SESSIONS_PER_PAGE = 5;
 const BATTERY_KWH = 40;
@@ -794,23 +485,17 @@ window.addEventListener('resize', () => {
 // ── API ────────────────────────────────────────────────────────────────────────
 async function loadSessions() {
   try {
-    const [sessRes, odoRes, cfgRes] = await Promise.all([
-      fetch('/api/sessions'),
-      fetch('/api/odometer'),
-      fetch('/api/config')
+    const [sessRes, odoRes] = await Promise.all([
+      fetch(API_BASE + '/api/sessions'),
+      fetch(API_BASE + '/api/odometer')
     ]);
     if (!sessRes.ok) throw new Error();
     sessions = await sessRes.json();
-    const migrated = migrateSessions(sessions);
-    if (migrated) await persistSessions();
+    migrateSessions(sessions);
     if (odoRes.ok) {
       const odoData = await odoRes.json();
       odometer = odoData.odometer;
       localStorage.setItem('ev-odo', odometer);
-    }
-    if (cfgRes.ok) {
-      const cfg = await cfgRes.json();
-      adminToken = cfg.adminToken || '';
     }
   } catch {
     showToast('Failed to load data — check connection', 'error');
@@ -823,10 +508,8 @@ async function loadSessions() {
 // Migrate old "23 Jun 2026, 02:16 PM" date strings to {date:"2026-06-23", time:"14:16"}
 function migrateSessions(arr) {
   const MONTHS = {Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
-  let changed = false;
   arr.forEach(s => {
     if (s.date && s.date.includes(' ')) {
-      // Old format detected
       const m = s.date.match(/(\d{1,2})\s+(\w{3})\s+(\d{4})(?:,\s*(\d{1,2}):(\d{2})\s*(AM|PM))?/i);
       if (m) {
         const dd = String(parseInt(m[1])).padStart(2,'0');
@@ -843,20 +526,9 @@ function migrateSessions(arr) {
         } else {
           s.time = s.time || null;
         }
-        changed = true;
       }
     }
   });
-  return changed;
-}
-
-async function persistSessions() {
-  const res = await fetch('/api/sessions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
-    body: JSON.stringify(sessions)
-  });
-  if (!res.ok) throw new Error('Save failed');
 }
 
 // ── HELPERS ────────────────────────────────────────────────────────────────────
@@ -864,19 +536,16 @@ function effRate(s) { return s.energy > 0 ? s.cost / s.energy : 0; }
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-// "2026-06-23" → "23 Jun 2026"
 function isoToDisplay(dateStr) {
   const [y, m, d] = dateStr.split('-');
   return `${parseInt(d)} ${MONTH_NAMES[parseInt(m)-1]} ${y}`;
 }
 
-// "2026-06-23" → "23 Jun" (short)
 function shortDate(dateStr) {
   const [, m, d] = dateStr.split('-');
   return `${parseInt(d)} ${MONTH_NAMES[parseInt(m)-1]}`;
 }
 
-// "14:16" → "2:16 PM"
 function formatTime(timeStr) {
   if (!timeStr) return null;
   const [hh, mm] = timeStr.split(':');
@@ -886,27 +555,18 @@ function formatTime(timeStr) {
   return `${h12}:${mm} ${ampm}`;
 }
 
-// ISO date → JS Date for sorting
-function parseDate(dateStr) {
-  return new Date(dateStr);
-}
+function parseDate(dateStr) { return new Date(dateStr); }
 
 function cmpDateTime(a, b, asc) {
   const d = parseDate(a.date) - parseDate(b.date);
   if (d !== 0) return asc ? d : -d;
-  // same date — sort by time (null time sorts last)
   const at = a.time || '99:99';
   const bt = b.time || '99:99';
   return asc ? at.localeCompare(bt) : bt.localeCompare(at);
 }
 
-function sortedSessions() {
-  return [...sessions].sort((a, b) => cmpDateTime(a, b, false));
-}
-
-function sortedSessionsAsc() {
-  return [...sessions].sort((a, b) => cmpDateTime(a, b, true));
-}
+function sortedSessions() { return [...sessions].sort((a, b) => cmpDateTime(a, b, false)); }
+function sortedSessionsAsc() { return [...sessions].sort((a, b) => cmpDateTime(a, b, true)); }
 
 function dateRange() {
   if (!sessions.length) return '';
@@ -944,7 +604,6 @@ function buildOverview() {
   const fastEnergy = sessions.filter(s => s.type === 'fast').reduce((s, x) => s + x.energy, 0);
   const slowEnergy = sessions.filter(s => s.type === 'slow').reduce((s, x) => s + x.energy, 0);
 
-  // Cheapest / most expensive network
   const netMap = {};
   paidSessions.forEach(s => {
     const n = s.network || 'Unknown';
@@ -957,7 +616,6 @@ function buildOverview() {
   const cheapest = netRates[0] || { name: '—', rate: 0 };
   const dearest = netRates[netRates.length - 1] || { name: '—', rate: 0 };
 
-  // Cycles
   const totalSocGain = sessions.reduce((s, x) => s + (x.endSoc - x.startSoc), 0);
   const cycles = totalSocGain / 100;
   const cyclesFrac = cycles % 1;
@@ -995,14 +653,7 @@ function buildOverview() {
         <strong>Odometer</strong>
         current reading
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        <div class="odo-value" id="odo-display">${odometer.toLocaleString('en-IN')} km</div>
-        <button class="odo-edit-btn" id="odo-edit-btn" onclick="startOdoEdit()">✏️ Edit</button>
-        <div class="odo-input-wrap" id="odo-input-wrap" style="display:none">
-          <input class="odo-input" id="odo-input" type="number" min="0" value="${odometer}" onkeydown="if(event.key==='Enter')saveOdo()">
-          <button class="odo-save-btn" onclick="saveOdo()">Save</button>
-        </div>
-      </div>
+      <div class="odo-value">${odometer.toLocaleString('en-IN')} km</div>
     </div>
 
     <div class="stat-grid">
@@ -1111,14 +762,13 @@ function buildOverview() {
 // ── SESSION CARDS ──────────────────────────────────────────────────────────────
 function buildSessionCards(filter) {
   const list = document.getElementById('sessions-list');
-  const sorted = sortedSessions(); // newest first
+  const sorted = sortedSessions();
   const visible = filter === 'all' ? sorted : sorted.filter(s => s.type === filter);
 
   if (!visible.length) {
     list.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--muted)">
       <div style="font-size:48px;margin-bottom:12px">⚡</div>
       <div style="font-size:16px;font-weight:600;color:var(--text)">No sessions yet</div>
-      <div style="font-size:13px;margin-top:6px">Tap + to add your first charging session</div>
     </div>`;
     return;
   }
@@ -1131,7 +781,6 @@ function buildSessionCards(filter) {
   const hasMore = loadedCount < visible.length;
 
   function cardHtml(s) {
-    const idx = sessions.indexOf(s);
     const socW = s.endSoc - s.startSoc;
     const er = effRate(s);
     const pc = ((s.endSoc - s.startSoc) / 100).toFixed(2);
@@ -1141,10 +790,7 @@ function buildSessionCards(filter) {
     return `<div class="session-card ${s.type}">
       <div class="session-header">
         <div class="session-name">${s.displayName}</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-          <div class="session-cost">₹${s.cost.toFixed(2)}</div>
-          <button class="card-btn" onclick="openModal(${idx})" title="Edit">✏️</button>
-        </div>
+        <div class="session-cost">₹${s.cost.toFixed(2)}</div>
       </div>
       <div class="session-meta">
         ${s.chargerKw ? `<span class="badge ${typeBadge}">${s.chargerKw} kW</span>` : `<span class="badge ${typeBadge}">${typeLabel}</span>`}
@@ -1211,12 +857,6 @@ function showTab(name) {
   if (name === 'analytics') buildAnalyticsCharts();
 }
 
-function changePage(dir) {
-  sessionsPage += dir;
-  buildSessionCards(currentFilter);
-  document.getElementById('tab-sessions').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
 // ── FILTER ─────────────────────────────────────────────────────────────────────
 function filterSessions(type, btn) {
   currentFilter = type;
@@ -1224,6 +864,11 @@ function filterSessions(type, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   buildSessionCards(type);
+}
+
+function toggleFreeFilter() {
+  excludeFree = !excludeFree;
+  buildOverview();
 }
 
 // ── ANALYTICS CHARTS ───────────────────────────────────────────────────────────
@@ -1321,132 +966,6 @@ function buildAnalyticsCharts() {
   });
 }
 
-// ── MODAL ──────────────────────────────────────────────────────────────────────
-function openModal(index) {
-  editingIndex = index;
-  const isEdit = index >= 0;
-  document.getElementById('modal-title').textContent = isEdit ? 'Edit Session' : 'Add Session';
-  document.getElementById('btn-delete-wrap').style.display = isEdit ? 'block' : 'none';
-  document.getElementById('delete-confirm').classList.add('hidden');
-  document.getElementById('btn-save').disabled = false;
-  document.getElementById('btn-save').textContent = 'Save Session';
-
-  // JSON mode only available for new sessions
-  document.getElementById('modal-mode-toggle').style.display = isEdit ? 'none' : 'flex';
-  setModalMode('form');
-  document.getElementById('json-input').value = '';
-  document.getElementById('json-preview').className = 'json-preview';
-  document.getElementById('btn-json-import').disabled = true;
-  document.getElementById('btn-json-import').textContent = 'Import Sessions';
-  document.getElementById('btn-json-import')._parsed = null;
-
-  if (isEdit) {
-    const s = sessions[index];
-    document.getElementById('f-date').value = s.date;
-    document.getElementById('f-time').value = s.time || '';
-    document.getElementById('f-name').value = s.displayName;
-    document.getElementById('f-start').value = s.startSoc;
-    document.getElementById('f-end').value = s.endSoc;
-    document.getElementById('f-energy').value = s.energy;
-    document.getElementById('f-cost').value = s.cost;
-    document.getElementById('f-rate').value = s.rate || '';
-    document.getElementById('f-network').value = s.network || '';
-    document.getElementById('f-charger-kw').value = s.chargerKw || '';
-    setType(s.type);
-    setFree(s.free || false);
-  } else {
-    document.getElementById('session-form').reset();
-    setType('slow');
-    setFree(false);
-  }
-
-  // Populate network suggestions
-  const nets = [...new Set(sessions.map(s => s.network).filter(Boolean))];
-  document.getElementById('networks-list').innerHTML = nets.map(n => `<option value="${n}">`).join('');
-
-  document.getElementById('modal-overlay').classList.add('open');
-  setTimeout(() => document.getElementById('f-date').focus(), 350);
-}
-
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-}
-
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
-}
-
-function setType(type) {
-  selectedType = type;
-  document.getElementById('btn-slow').classList.toggle('active', type === 'slow');
-  document.getElementById('btn-fast').classList.toggle('active', type === 'fast');
-}
-
-function setFree(val) {
-  selectedFree = val;
-  document.getElementById('btn-not-free').classList.toggle('active', !val);
-  document.getElementById('btn-free').classList.toggle('active', val);
-}
-
-function toggleFreeFilter() {
-  excludeFree = !excludeFree;
-  buildOverview();
-}
-
-async function handleFormSubmit(e) {
-  e.preventDefault();
-  const startSoc = parseInt(document.getElementById('f-start').value);
-  const endSoc = parseInt(document.getElementById('f-end').value);
-  if (endSoc < startSoc) { showToast('End % must be ≥ Start %', 'error'); return; }
-
-  const session = {
-    date: document.getElementById('f-date').value,
-    time: document.getElementById('f-time').value || null,
-    displayName: document.getElementById('f-name').value.trim(),
-    type: selectedType, startSoc, endSoc,
-    energy: parseFloat(document.getElementById('f-energy').value),
-    cost: parseFloat(document.getElementById('f-cost').value),
-    rate: document.getElementById('f-rate').value.trim(),
-    network: document.getElementById('f-network').value.trim(),
-    chargerKw: parseFloat(document.getElementById('f-charger-kw').value) || null,
-    free: selectedFree
-  };
-
-  const btn = document.getElementById('btn-save');
-  btn.disabled = true; btn.textContent = 'Saving…';
-
-  const prev = [...sessions];
-  if (editingIndex === -1) { sessions.push(session); } else { sessions[editingIndex] = session; }
-
-  try {
-    await persistSessions();
-    closeModal();
-    renderAll();
-    showToast(editingIndex === -1 ? 'Session added ✓' : 'Session updated ✓', 'success');
-  } catch {
-    sessions = prev;
-    showToast('Save failed — check connection', 'error');
-    btn.disabled = false; btn.textContent = 'Save Session';
-  }
-}
-
-function confirmDelete() { document.getElementById('delete-confirm').classList.remove('hidden'); }
-function cancelDelete() { document.getElementById('delete-confirm').classList.add('hidden'); }
-
-async function executeDelete() {
-  const prev = [...sessions];
-  sessions.splice(editingIndex, 1);
-  closeModal();
-  try {
-    await persistSessions();
-    renderAll();
-    showToast('Session deleted', 'success');
-  } catch {
-    sessions = prev;
-    showToast('Delete failed — check connection', 'error');
-  }
-}
-
 // ── TOAST ──────────────────────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg, type = 'success') {
@@ -1455,121 +974,6 @@ function showToast(msg, type = 'success') {
   t.className = `toast ${type} show`;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-// ── MODAL MODE ─────────────────────────────────────────────────────────────────
-let modalMode = 'form';
-
-function setModalMode(mode) {
-  modalMode = mode;
-  document.getElementById('btn-mode-form').classList.toggle('active', mode === 'form');
-  document.getElementById('btn-mode-json').classList.toggle('active', mode === 'json');
-  document.getElementById('form-body').classList.toggle('hidden', mode === 'json');
-  document.getElementById('json-panel').classList.toggle('active', mode === 'json');
-  if (mode === 'json') {
-    setTimeout(() => document.getElementById('json-input').focus(), 50);
-  }
-}
-
-// ── JSON IMPORT ────────────────────────────────────────────────────────────────
-// charger_type_kwh ≤ 7.6 → slow AC, > 7.6 → fast DC
-function mapJsonSession(raw) {
-  const kw = raw.charger_type_kwh || null;
-  const speedType = (kw && kw > 7.6) ? 'fast' : 'slow';
-  const isFree = raw.type === 'unpaid';
-  return {
-    date: raw.date,
-    time: raw.time || null,
-    displayName: raw.vector_element || '',
-    type: speedType,
-    startSoc: raw.start_percentage,
-    endSoc: raw.end_percentage,
-    energy: raw.energy_kwh,
-    cost: raw.absolute_cost_inr,
-    rate: raw.unit_cost_metrics || '',
-    network: null,
-    chargerKw: kw,
-    free: isFree
-  };
-}
-
-function previewJson() {
-  const raw = document.getElementById('json-input').value.trim();
-  const preview = document.getElementById('json-preview');
-  const btn = document.getElementById('btn-json-import');
-
-  if (!raw) {
-    preview.className = 'json-preview';
-    btn.disabled = true;
-    return;
-  }
-
-  try {
-    let parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) parsed = [parsed];
-    const valid = parsed.filter(r => r.date && r.vector_element && r.energy_kwh != null && r.absolute_cost_inr != null);
-    if (!valid.length) throw new Error('No valid sessions found');
-    preview.className = 'json-preview visible ok';
-    preview.textContent = `✓ ${valid.length} session${valid.length !== 1 ? 's' : ''} ready to import`;
-    btn.disabled = false;
-    btn._parsed = valid;
-  } catch (err) {
-    preview.className = 'json-preview visible err';
-    preview.textContent = `✗ ${err.message}`;
-    btn.disabled = true;
-    btn._parsed = null;
-  }
-}
-
-async function importJson() {
-  const btn = document.getElementById('btn-json-import');
-  const toImport = btn._parsed;
-  if (!toImport || !toImport.length) return;
-
-  const mapped = toImport.map(mapJsonSession);
-  const prev = [...sessions];
-  sessions.push(...mapped);
-
-  btn.disabled = true;
-  btn.textContent = 'Importing…';
-
-  try {
-    await persistSessions();
-    closeModal();
-    renderAll();
-    showToast(`${mapped.length} session${mapped.length !== 1 ? 's' : ''} imported ✓`, 'success');
-  } catch {
-    sessions = prev;
-    showToast('Import failed — check connection', 'error');
-    btn.disabled = false;
-    btn.textContent = 'Import Sessions';
-  }
-}
-
-// ── ODOMETER ───────────────────────────────────────────────────────────────────
-function startOdoEdit() {
-  document.getElementById('odo-edit-btn').style.display = 'none';
-  document.getElementById('odo-input-wrap').style.display = 'flex';
-  const inp = document.getElementById('odo-input');
-  inp.value = odometer;
-  inp.focus();
-  inp.select();
-}
-
-function saveOdo() {
-  const val = parseInt(document.getElementById('odo-input').value);
-  if (!isNaN(val) && val >= 0) {
-    odometer = val;
-    localStorage.setItem('ev-odo', val);
-    document.getElementById('odo-display').textContent = val.toLocaleString('en-IN') + ' km';
-    fetch('/api/odometer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
-      body: JSON.stringify({ odometer: val })
-    }).catch(() => showToast('Odo save failed — check connection', 'error'));
-  }
-  document.getElementById('odo-edit-btn').style.display = '';
-  document.getElementById('odo-input-wrap').style.display = 'none';
 }
 
 // ── LOADING ────────────────────────────────────────────────────────────────────
