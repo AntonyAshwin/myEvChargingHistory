@@ -922,14 +922,19 @@ function buildOverview() {
     </div>
 
     <div class="odo-card" id="odo-card">
-      <div>
-        <div class="odo-label">Odometer</div>
-        <div class="odo-value" id="odo-display">${odometer.toLocaleString('en-IN')} km</div>
-        <div class="odo-sub">current reading</div>
+      <div class="gt-label">
+        <strong>Odometer</strong>
+        current reading
       </div>
-      <button class="odo-edit-btn" id="odo-edit-btn" onclick="startOdoEdit()">✏️ Edit</button>
-      <div class="odo-input-wrap" id="odo-input-wrap" style="display:none">
-        <input class="odo-input" id="odo-input" type="number" min="0" value="${odometer}" onkeydown="if(event.key==='Enter')saveOdo()">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="odo-value" id="odo-display">${odometer.toLocaleString('en-IN')} km</div>
+        <button class="odo-edit-btn" id="odo-edit-btn" onclick="startOdoEdit()">✏️ Edit</button>
+        <div class="odo-input-wrap" id="odo-input-wrap" style="display:none">
+          <input class="odo-input" id="odo-input" type="number" min="0" value="${odometer}" onkeydown="if(event.key==='Enter')saveOdo()">
+          <button class="odo-save-btn" onclick="saveOdo()">Save</button>
+        </div>
+      </div>
+    </div>
         <button class="odo-save-btn" onclick="saveOdo()">Save</button>
       </div>
     </div>
