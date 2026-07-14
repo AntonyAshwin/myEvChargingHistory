@@ -130,12 +130,11 @@
     .odo-value { font-size: 26px; font-weight: 900; color: #93c5fd; line-height: 1; }
     .odo-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
     .odo-edit-btn {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 7px 12px;
-      color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer;
-      white-space: nowrap; flex-shrink: 0;
+      background: transparent; border: none;
+      color: var(--muted); font-size: 11px; cursor: pointer;
+      padding: 0; text-decoration: underline; text-underline-offset: 2px;
     }
-    .odo-edit-btn:active { background: var(--border); }
+    .odo-edit-btn:active { color: var(--text); }
     .odo-input-wrap { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
     .odo-input {
       width: 100px; background: var(--surface2); border: 1px solid var(--accent);
@@ -933,9 +932,6 @@ function buildOverview() {
           <input class="odo-input" id="odo-input" type="number" min="0" value="${odometer}" onkeydown="if(event.key==='Enter')saveOdo()">
           <button class="odo-save-btn" onclick="saveOdo()">Save</button>
         </div>
-      </div>
-    </div>
-        <button class="odo-save-btn" onclick="saveOdo()">Save</button>
       </div>
     </div>
 
