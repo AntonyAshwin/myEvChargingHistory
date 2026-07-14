@@ -714,6 +714,7 @@ let selectedType = 'slow';
 let selectedFree = false;
 let excludeFree = false;
 let odometer = parseInt(localStorage.getItem('ev-odo') || '1980'); // cache; overwritten by API on load
+let adminToken = '';
 let loadedCount = 5;
 const SESSIONS_PER_PAGE = 5;
 const BATTERY_KWH = 40;
@@ -729,9 +730,10 @@ loadSessions();
 // ── API ────────────────────────────────────────────────────────────────────────
 async function loadSessions() {
   try {
-    const [sessRes, odoRes] = await Promise.all([
+    const [sessRes, odoRes, cfgRes] = await Promise.all([
       fetch('/api/sessions'),
-      fetch('/api/odometer')
+      fetch('/api/odometer'),
+      fetch('/api/config')
     ]);
     if (!sessRes.ok) throw new Error();
     sessions = await sessRes.json();
@@ -741,6 +743,10 @@ async function loadSessions() {
       const odoData = await odoRes.json();
       odometer = odoData.odometer;
       localStorage.setItem('ev-odo', odometer);
+    }
+    if (cfgRes.ok) {
+      const cfg = await cfgRes.json();
+      adminToken = cfg.adminToken || '';
     }
   } catch {
     showToast('Failed to load data — check connection', 'error');
@@ -783,7 +789,7 @@ function migrateSessions(arr) {
 async function persistSessions() {
   const res = await fetch('/api/sessions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
     body: JSON.stringify(sessions)
   });
   if (!res.ok) throw new Error('Save failed');
@@ -1494,7 +1500,7 @@ function saveOdo() {
     document.getElementById('odo-display').textContent = val.toLocaleString('en-IN') + ' km';
     fetch('/api/odometer', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
       body: JSON.stringify({ odometer: val })
     }).catch(() => showToast('Odo save failed — check connection', 'error'));
   }

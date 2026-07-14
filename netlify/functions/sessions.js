@@ -81,6 +81,10 @@ export default async (req) => {
   }
 
   if (req.method === "POST") {
+    const token = process.env.GITHUB_TOKEN;
+    if (token && req.headers.get("x-admin-token") !== token) {
+      return new Response("Unauthorized", { status: 401 });
+    }
     const sessions = await req.json();
     if (!Array.isArray(sessions)) {
       return new Response("Invalid data", { status: 400 });

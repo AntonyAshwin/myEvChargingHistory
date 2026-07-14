@@ -13,6 +13,10 @@ export default async (req) => {
   }
 
   if (req.method === "POST") {
+    const token = process.env.GITHUB_TOKEN;
+    if (token && req.headers.get("x-admin-token") !== token) {
+      return new Response("Unauthorized", { status: 401 });
+    }
     const body = await req.json();
     if (typeof body.odometer !== "number" || body.odometer < 0) {
       return new Response("Invalid value", { status: 400 });
