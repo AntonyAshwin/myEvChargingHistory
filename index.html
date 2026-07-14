@@ -882,9 +882,9 @@ function buildOverview() {
       <div class="stat-card"><div class="stat-label">Total Energy</div><div class="stat-value">${totalEnergy.toFixed(1)}</div><div class="stat-sub">kWh charged</div></div>
       <div class="stat-card"><div class="stat-label">Sessions</div><div class="stat-value">${sessions.length}</div><div class="stat-sub">total charges</div></div>
       <div class="stat-card"><div class="stat-label">Avg Cost/kWh</div><div class="stat-value">₹${avgRate}</div><div class="stat-sub">blended rate</div></div>
-      <div class="stat-card"><div class="stat-label">Cheapest</div><div class="stat-value" style="font-size:15px">${cheapest.name}</div><div class="stat-sub">₹${cheapest.rate.toFixed(2)}/kWh</div></div>
-      <div class="stat-card gold"><div class="stat-label">Most Expensive</div><div class="stat-value gold-text" style="font-size:15px">${dearest.name}</div><div class="stat-sub">₹${dearest.rate.toFixed(2)}/kWh</div></div>
       <div class="stat-card"><div class="stat-label">Range Est.</div><div class="stat-value" style="font-size:15px">~${estRange.toLocaleString('en-IN')}</div><div class="stat-sub">km (@ 9.5 km/kWh)</div></div>
+      <div class="stat-card gold"><div class="stat-label">Most Expensive</div><div class="stat-value gold-text" style="font-size:15px">${dearest.name}</div><div class="stat-sub">₹${dearest.rate.toFixed(2)}/kWh</div></div>
+      <div class="stat-card"><div class="stat-label">Cheapest</div><div class="stat-value" style="font-size:15px">${cheapest.name}</div><div class="stat-sub">₹${cheapest.rate.toFixed(2)}/kWh</div></div>
     </div>
 
     <div class="chart-card">
