@@ -8,41 +8,74 @@
 </head>
 <body>
 
-<h1>Ashwin's EV Charging History</h1>
+<h1>Ashwin's ev charging history</h1>
 <p>40 kWh &bull; <span id="period-badge"></span> &bull; <em>Viewer</em></p>
 
+<style>
+  @media (min-width: 900px) {
+    #mobile-tabs { display: none; }
+    #mobile-sections { display: none; }
+    #desktop-layout { display: table !important; }
+  }
+  @media (max-width: 899px) {
+    #desktop-layout { display: none !important; }
+  }
+</style>
+
 <hr>
 
-<!-- TABS (mobile nav) -->
-<p>
-  <a href="#" onclick="showTab('overview');return false;">[Overview]</a> |
-  <a href="#" onclick="showTab('sessions');return false;">[Sessions]</a> |
-  <a href="#" onclick="showTab('analytics');return false;">[Analytics]</a>
-</p>
-
-<hr>
-
-<!-- OVERVIEW -->
-<div id="tab-overview">
-  <h2>Overview</h2>
-  <div id="overview-content"></div>
-</div>
-
-<!-- SESSIONS -->
-<div id="tab-sessions" style="display:none">
-  <h2>Sessions</h2>
+<!-- MOBILE TABS -->
+<div id="mobile-tabs">
   <p>
-    <button id="filter-all" onclick="filterSessions('all', this)">All</button>
-    <button id="filter-fast" onclick="filterSessions('fast', this)">&#9889; Fast</button>
-    <button id="filter-slow" onclick="filterSessions('slow', this)">&#127807; Slow</button>
+    <a href="#" onclick="showTab('overview');return false;">[Overview]</a> |
+    <a href="#" onclick="showTab('sessions');return false;">[Sessions]</a> |
+    <a href="#" onclick="showTab('analytics');return false;">[Analytics]</a>
   </p>
-  <div id="sessions-list"></div>
+  <hr>
 </div>
 
-<!-- ANALYTICS -->
-<div id="tab-analytics" style="display:none">
-  <h2>Analytics</h2>
-  <div id="analytics-content"></div>
+<!-- DESKTOP: 3-column table -->
+<table id="desktop-layout" border="1" cellpadding="10" cellspacing="0" width="100%">
+  <tr valign="top">
+    <td width="33%">
+      <h2>Overview</h2>
+      <div id="overview-content"></div>
+    </td>
+    <td width="33%">
+      <h2>Sessions</h2>
+      <p>
+        <button id="filter-all" onclick="filterSessions('all', this)">All</button>
+        <button id="filter-fast" onclick="filterSessions('fast', this)">&#9889; Fast</button>
+        <button id="filter-slow" onclick="filterSessions('slow', this)">&#127807; Slow</button>
+      </p>
+      <div id="sessions-list"></div>
+    </td>
+    <td width="33%">
+      <h2>Analytics</h2>
+      <div id="analytics-content"></div>
+    </td>
+  </tr>
+</table>
+
+<!-- MOBILE: tabbed sections (reuse same content divs via JS) -->
+<div id="mobile-sections">
+  <div id="tab-overview">
+    <h2>Overview</h2>
+    <div id="overview-content-m"></div>
+  </div>
+  <div id="tab-sessions" style="display:none">
+    <h2>Sessions</h2>
+    <p>
+      <button id="filter-all-m" onclick="filterSessions('all', this)">All</button>
+      <button id="filter-fast-m" onclick="filterSessions('fast', this)">&#9889; Fast</button>
+      <button id="filter-slow-m" onclick="filterSessions('slow', this)">&#127807; Slow</button>
+    </p>
+    <div id="sessions-list-m"></div>
+  </div>
+  <div id="tab-analytics" style="display:none">
+    <h2>Analytics</h2>
+    <div id="analytics-content-m"></div>
+  </div>
 </div>
 
 <!-- LOADING -->
@@ -64,9 +97,13 @@ const SESSIONS_PER_PAGE = 5;
 const BATTERY_KWH = 40;
 const charts = {};
 
-Chart.defaults.font.size = 11;
+function isDesktop() { return window.innerWidth >= 900; }
 
-// ── INIT ───────────────────────────────────────────────────────────────────────
+function overviewEl() { return isDesktop() ? document.getElementById('overview-content') : document.getElementById('overview-content-m'); }
+function sessionsEl() { return isDesktop() ? document.getElementById('sessions-list') : document.getElementById('sessions-list-m'); }
+function analyticsEl() { return isDesktop() ? document.getElementById('analytics-content') : document.getElementById('analytics-content-m'); }
+
+
 loadSessions();
 
 // ── API ────────────────────────────────────────────────────────────────────────
@@ -172,7 +209,7 @@ function renderAll() {
   buildOverview();
   buildSessionCards(currentFilter);
   updateFilterCounts();
-  if (currentTab === 'analytics') buildAnalyticsCharts();
+  if (currentTab === 'analytics' || isDesktop()) buildAnalyticsCharts();
 }
 
 // ── OVERVIEW ───────────────────────────────────────────────────────────────────
@@ -219,7 +256,7 @@ function buildOverview() {
 
   document.getElementById('period-badge').innerHTML = dr;
 
-  document.getElementById('overview-content').innerHTML = `
+  overviewEl().innerHTML = `
     ${freeSessions.length > 0 ? `
     <p>
       ${excludeFree ? `<small>${freeSessions.length} unpaid session${freeSessions.length !== 1 ? 's' : ''} excluded</small>` : ''}
@@ -297,7 +334,7 @@ function buildOverview() {
 
 // ── SESSION CARDS ──────────────────────────────────────────────────────────────
 function buildSessionCards(filter) {
-  const list = document.getElementById('sessions-list');
+  const list = sessionsEl();
   const sorted = sortedSessions();
   const visible = filter === 'all' ? sorted : sorted.filter(s => s.type === filter);
 
@@ -361,16 +398,17 @@ function buildSessionCards(filter) {
 function updateFilterCounts() {
   const f = sessions.filter(s => s.type === 'fast').length;
   const sl = sessions.filter(s => s.type === 'slow').length;
-  document.getElementById('filter-all').textContent = `All (${sessions.length})`;
-  document.getElementById('filter-fast').textContent = `Fast (${f})`;
-  document.getElementById('filter-slow').textContent = `Slow (${sl})`;
+  ['filter-all','filter-all-m'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = `All (${sessions.length})`; });
+  ['filter-fast','filter-fast-m'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = `Fast (${f})`; });
+  ['filter-slow','filter-slow-m'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = `Slow (${sl})`; });
 }
 
 // ── TABS ───────────────────────────────────────────────────────────────────────
 function showTab(name) {
   currentTab = name;
   ['overview','sessions','analytics'].forEach(t => {
-    document.getElementById('tab-' + t).style.display = t === name ? '' : 'none';
+    const el = document.getElementById('tab-' + t);
+    if (el) el.style.display = t === name ? '' : 'none';
   });
   if (name === 'analytics') buildAnalyticsCharts();
 }
@@ -395,7 +433,7 @@ function buildAnalyticsCharts() {
 
   const sorted = sortedSessionsAsc();
   if (!sorted.length) {
-    document.getElementById('analytics-content').innerHTML = '<p>No data to display.</p>';
+    analyticsEl().innerHTML = '<p>No data to display.</p>';
     return;
   }
 
@@ -420,7 +458,7 @@ function buildAnalyticsCharts() {
   const ratio = slowRate > 0 ? (fastRate / slowRate).toFixed(1) : '-';
   const totalCost = fastCost + slowCost;
 
-  document.getElementById('analytics-content').innerHTML = `
+  analyticsEl().innerHTML = `
     <h3>Cost per kWh by Network (&#8377;/kWh eff.)</h3>
     <div style="max-width:600px"><canvas id="rateChart" height="200"></canvas></div>
 
