@@ -2,455 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>Ashwin's ev history</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ashwin's EV History</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0d0f14;
-      --surface: #161b26;
-      --surface2: #1e2535;
-      --border: #2a3347;
-      --fast: #ef4444;
-      --fast-dim: rgba(239,68,68,0.12);
-      --fast-glow: rgba(239,68,68,0.3);
-      --slow: #22c55e;
-      --slow-dim: rgba(34,197,94,0.12);
-      --slow-glow: rgba(34,197,94,0.3);
-      --accent: #3b82f6;
-      --accent-dim: rgba(59,130,246,0.15);
-      --text: #e2e8f0;
-      --muted: #64748b;
-      --gold: #f59e0b;
-    }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 14px;
-      min-height: 100vh;
-      padding-bottom: 40px;
-    }
-
-    /* ── HEADER ── */
-    .header {
-      background: linear-gradient(135deg, #1a2540 0%, #0d1a2e 100%);
-      border-bottom: 1px solid var(--border);
-      padding: 20px 16px 16px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .header-top { display: flex; align-items: center; gap: 12px; }
-    .car-icon {
-      width: 44px; height: 44px;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-    .header-title { font-size: 17px; font-weight: 700; color: #fff; }
-    .header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .period-badge {
-      margin-left: auto;
-      background: var(--accent-dim);
-      border: 1px solid rgba(59,130,246,0.3);
-      color: #93c5fd;
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 20px;
-      white-space: nowrap;
-    }
-    .role-badge {
-      background: rgba(100,116,139,0.15);
-      border: 1px solid rgba(100,116,139,0.3);
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 20px;
-      white-space: nowrap;
-      letter-spacing: 0.3px;
-    }
-
-    /* ── TABS ── */
-    .tabs {
-      display: flex;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .tabs::-webkit-scrollbar { display: none; }
-    .tab {
-      flex-shrink: 0;
-      padding: 12px 16px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-    .tab.active {
-      color: #93c5fd;
-      border-bottom-color: var(--accent);
-    }
-
-    /* ── SECTIONS ── */
-    .section { display: none; padding: 16px; }
-    .section.active { display: block; }
-
-    /* ── SUMMARY CARDS ── */
-    .stat-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-    }
-    .stat-card.full { grid-column: 1 / -1; }
-    .stat-card.gold { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.05); }
-    .stat-card.green { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.05); }
-
-    /* ── ODO CARD ── */
-    .odo-card {
-      background: linear-gradient(135deg, #1a1f35 0%, #0d1a2e 100%);
-      border: 1px solid rgba(59,130,246,0.35);
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .odo-value { font-size: 26px; font-weight: 900; color: #93c5fd; line-height: 1; }
-    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    .stat-value { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; }
-    .stat-value.gold-text { color: var(--gold); }
-    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
-
-    /* ── FAST/SLOW SPLIT ── */
-    .split-bar-wrap { margin-bottom: 16px; }
-    .split-bar-labels {
-      display: flex; justify-content: space-between;
-      font-size: 11px; margin-bottom: 6px;
-    }
-    .split-bar {
-      height: 10px; border-radius: 99px;
-      background: var(--surface2);
-      overflow: hidden;
-      display: flex;
-    }
-    .split-bar-fast {
-      height: 100%;
-      background: linear-gradient(90deg, #dc2626, #ef4444);
-      border-radius: 99px 0 0 99px;
-      transition: width 1s;
-    }
-    .split-bar-slow {
-      height: 100%;
-      background: linear-gradient(90deg, #16a34a, #22c55e);
-      border-radius: 0 99px 99px 0;
-    }
-    .label-fast { color: var(--fast); font-weight: 600; }
-    .label-slow { color: var(--slow); font-weight: 600; }
-
-    /* ── CHART CARD ── */
-    .chart-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    .chart-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 14px; }
-    .chart-wrap { position: relative; width: 100%; }
-
-    /* ── CYCLE CARD ── */
-    .cycle-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    .cycle-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-    .cycle-number { font-size: 36px; font-weight: 900; color: #3b82f6; line-height: 1; }
-    .cycle-unit { font-size: 13px; color: var(--muted); margin-top: 4px; }
-    .cycle-badge {
-      background: var(--accent-dim);
-      border: 1px solid rgba(59,130,246,0.3);
-      color: #93c5fd;
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 20px;
-    }
-    .cycle-bar-wrap { margin-top: 6px; }
-    .cycle-bar-bg {
-      height: 8px;
-      background: var(--surface2);
-      border-radius: 99px;
-      overflow: hidden;
-      margin-bottom: 6px;
-    }
-    .cycle-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #2563eb, #60a5fa);
-      border-radius: 99px;
-      transition: width 1s;
-    }
-    .cycle-info { font-size: 11px; color: var(--muted); }
-    .cycle-note {
-      margin-top: 10px;
-      padding: 10px 12px;
-      background: var(--accent-dim);
-      border-left: 3px solid var(--accent);
-      border-radius: 0 8px 8px 0;
-      font-size: 11px;
-      color: #93c5fd;
-      line-height: 1.5;
-    }
-
-    /* ── SESSION CARDS ── */
-    .session-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 10px;
-      position: relative;
-      overflow: hidden;
-    }
-    .session-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 4px;
-      border-radius: 4px 0 0 4px;
-    }
-    .session-card.fast::before { background: var(--fast); }
-    .session-card.slow::before { background: var(--slow); }
-    .session-card.fast { background: linear-gradient(135deg, #161b26 0%, #1a1218 100%); }
-    .session-card.slow { background: linear-gradient(135deg, #161b26 0%, #101a14 100%); }
-
-    .session-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px; }
-    .session-name { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.3; flex: 1; }
-    .session-cost { font-size: 18px; font-weight: 800; white-space: nowrap; }
-    .session-card.fast .session-cost { color: var(--fast); }
-    .session-card.slow .session-cost { color: var(--slow); }
-
-    .session-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
-    .badge {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 20px;
-      letter-spacing: 0.3px;
-      text-transform: uppercase;
-    }
-    .badge-fast { background: var(--fast-dim); color: var(--fast); border: 1px solid rgba(239,68,68,0.3); }
-    .badge-slow { background: var(--slow-dim); color: var(--slow); border: 1px solid rgba(34,197,94,0.3); }
-    .badge-date { background: var(--accent-dim); color: #93c5fd; border: 1px solid rgba(59,130,246,0.25); }
-
-    /* ── SOC BAR ── */
-    .soc-wrap { margin-bottom: 10px; }
-    .soc-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-
-    /* ── SESSION DETAILS ROW ── */
-    .session-details { display: flex; gap: 8px; flex-wrap: wrap; }
-    .detail-pill {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 11px;
-      color: var(--text);
-      flex: 1;
-      min-width: 0;
-      text-align: center;
-    }
-    .detail-pill strong { display: block; font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 1px; }
-
-    /* ── FILTER ROW ── */
-    .filter-row {
-      display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto;
-      scrollbar-width: none; padding-bottom: 2px;
-    }
-    .filter-row::-webkit-scrollbar { display: none; }
-    .filter-btn {
-      flex-shrink: 0;
-      padding: 7px 14px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .filter-btn.active { background: var(--accent-dim); border-color: rgba(59,130,246,0.4); color: #93c5fd; }
-    .filter-btn.fast-btn.active { background: var(--fast-dim); border-color: rgba(239,68,68,0.4); color: var(--fast); }
-    .filter-btn.slow-btn.active { background: var(--slow-dim); border-color: rgba(34,197,94,0.4); color: var(--slow); }
-
-    /* ── GRAND TOTAL BANNER ── */
-    .grand-total {
-      background: linear-gradient(135deg, #1a2a1a 0%, #1a1f35 100%);
-      border: 1px solid rgba(245,158,11,0.4);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .gt-label { font-size: 13px; color: var(--muted); }
-    .gt-label strong { display: block; font-size: 15px; font-weight: 700; color: var(--text); }
-    .gt-amount { font-size: 26px; font-weight: 900; color: var(--gold); }
-
-    /* ── RESPONSIVE ── */
-    @media (min-width: 480px) {
-      .stat-grid { grid-template-columns: 1fr 1fr 1fr; }
-      .stat-card.full { grid-column: auto; }
-    }
-
-    /* ── DESKTOP 3-COL LAYOUT ── */
-    @media (min-width: 900px) {
-      .tabs { display: none; }
-
-      .desktop-body {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 0;
-        height: calc(100vh - 73px);
-        overflow: hidden;
-      }
-
-      .section {
-        display: block !important;
-        height: 100%;
-        overflow-y: auto;
-        padding: 20px;
-        border-right: 1px solid var(--border);
-        scrollbar-width: thin;
-        scrollbar-color: var(--border) transparent;
-      }
-      .section:last-child { border-right: none; }
-
-      .section-heading {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: var(--muted);
-        margin-bottom: 14px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid var(--border);
-      }
-    }
-
-    /* ── TOAST ── */
-    .toast {
-      position: fixed; bottom: 100px; left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: #1e293b; border: 1px solid var(--border);
-      color: var(--text); font-size: 13px; font-weight: 500;
-      padding: 10px 20px; border-radius: 99px;
-      opacity: 0; visibility: hidden; transition: all 0.3s;
-      z-index: 400; white-space: nowrap;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5); pointer-events: none;
-    }
-    .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-    .toast.error { border-color: rgba(239,68,68,0.4); color: var(--fast); }
-
-    /* ── LOADING ── */
-    .loading-overlay {
-      position: fixed; inset: 0; background: var(--bg); z-index: 500;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 16px; transition: opacity 0.3s;
-    }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid var(--border); border-top-color: var(--accent);
-      border-radius: 50%; animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="header-top">
-    <div class="car-icon">⚡</div>
-    <div>
-      <div class="header-title">Tata Punch EV</div>
-      <div class="header-sub">40 kWh · Charging History</div>
-    </div>
-    <div class="period-badge" id="period-badge">Jun–Jul 2026</div>
-    <div class="role-badge">Viewer</div>
-  </div>
-</div>
+<h1>Ashwin's EV Charging History</h1>
+<p>40 kWh &bull; <span id="period-badge"></span> &bull; <em>Viewer</em></p>
 
-<!-- TABS -->
-<div class="tabs">
-  <div class="tab active" onclick="showTab('overview')">Overview</div>
-  <div class="tab" onclick="showTab('sessions')">Sessions</div>
-  <div class="tab" onclick="showTab('analytics')">Analytics</div>
-</div>
+<hr>
 
-<div class="desktop-body">
+<!-- TABS (mobile nav) -->
+<p>
+  <a href="#" onclick="showTab('overview');return false;">[Overview]</a> |
+  <a href="#" onclick="showTab('sessions');return false;">[Sessions]</a> |
+  <a href="#" onclick="showTab('analytics');return false;">[Analytics]</a>
+</p>
 
-<!-- ══════════════ OVERVIEW TAB ══════════════ -->
-<div class="section active" id="tab-overview">
-  <div class="section-heading">Overview</div>
+<hr>
+
+<!-- OVERVIEW -->
+<div id="tab-overview">
+  <h2>Overview</h2>
   <div id="overview-content"></div>
 </div>
 
-<!-- ══════════════ SESSIONS TAB ══════════════ -->
-<div class="section" id="tab-sessions">
-  <div class="section-heading">Sessions</div>
-
-  <div class="filter-row">
-    <button id="filter-all" class="filter-btn active" onclick="filterSessions('all', this)">All (8)</button>
-    <button id="filter-fast" class="filter-btn fast-btn" onclick="filterSessions('fast', this)">⚡ Fast (4)</button>
-    <button id="filter-slow" class="filter-btn slow-btn" onclick="filterSessions('slow', this)">🌿 Slow (4)</button>
-  </div>
-
+<!-- SESSIONS -->
+<div id="tab-sessions" style="display:none">
+  <h2>Sessions</h2>
+  <p>
+    <button id="filter-all" onclick="filterSessions('all', this)">All</button>
+    <button id="filter-fast" onclick="filterSessions('fast', this)">&#9889; Fast</button>
+    <button id="filter-slow" onclick="filterSessions('slow', this)">&#127807; Slow</button>
+  </p>
   <div id="sessions-list"></div>
-
 </div>
 
-<!-- ══════════════ ANALYTICS TAB ══════════════ -->
-<div class="section" id="tab-analytics">
-  <div class="section-heading">Analytics</div>
+<!-- ANALYTICS -->
+<div id="tab-analytics" style="display:none">
+  <h2>Analytics</h2>
   <div id="analytics-content"></div>
 </div>
 
+<!-- LOADING -->
+<div id="loading-overlay">
+  <p><em>Loading sessions&hellip;</em></p>
 </div>
-
-<!-- LOADING OVERLAY -->
-<div id="loading-overlay" class="loading-overlay">
-  <div class="spinner"></div>
-  <div style="color:var(--muted);font-size:13px">Loading sessions…</div>
-</div>
-
-<!-- TOAST -->
-<div id="toast" class="toast"></div>
 
 <script>
 const API_BASE = 'https://myevh.netlify.app';
@@ -466,21 +64,10 @@ const SESSIONS_PER_PAGE = 5;
 const BATTERY_KWH = 40;
 const charts = {};
 
-Chart.defaults.color = '#64748b';
-Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 Chart.defaults.font.size = 11;
 
 // ── INIT ───────────────────────────────────────────────────────────────────────
 loadSessions();
-
-let _wasDesktop = window.innerWidth >= 900;
-window.addEventListener('resize', () => {
-  const isDesktop = window.innerWidth >= 900;
-  if (isDesktop !== _wasDesktop) {
-    _wasDesktop = isDesktop;
-    if (isDesktop) buildAnalyticsCharts();
-  }
-});
 
 // ── API ────────────────────────────────────────────────────────────────────────
 async function loadSessions() {
@@ -498,7 +85,7 @@ async function loadSessions() {
       localStorage.setItem('ev-odo', odometer);
     }
   } catch {
-    showToast('Failed to load data — check connection', 'error');
+    alert('Failed to load data - check connection');
     sessions = [];
   }
   hideLoading();
@@ -574,7 +161,7 @@ function dateRange() {
   const am = MONTH_NAMES[parseInt(s[0].date.split('-')[1])-1];
   const bm = MONTH_NAMES[parseInt(s[s.length-1].date.split('-')[1])-1];
   const yr = s[s.length-1].date.split('-')[0];
-  return am === bm ? `${am} ${yr}` : `${am}–${bm} ${yr}`;
+  return am === bm ? `${am} ${yr}` : `${am}&#8211;${bm} ${yr}`;
 }
 
 function fmt(n) { return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -585,7 +172,7 @@ function renderAll() {
   buildOverview();
   buildSessionCards(currentFilter);
   updateFilterCounts();
-  if (currentTab === 'analytics' || window.innerWidth >= 900) buildAnalyticsCharts();
+  if (currentTab === 'analytics') buildAnalyticsCharts();
 }
 
 // ── OVERVIEW ───────────────────────────────────────────────────────────────────
@@ -613,8 +200,8 @@ function buildOverview() {
   const netRates = Object.entries(netMap)
     .map(([n, v]) => ({ name: n, rate: v.energy > 0 ? v.cost / v.energy : 0 }))
     .sort((a, b) => a.rate - b.rate);
-  const cheapest = netRates[0] || { name: '—', rate: 0 };
-  const dearest = netRates[netRates.length - 1] || { name: '—', rate: 0 };
+  const cheapest = netRates[0] || { name: '', rate: 0 };
+  const dearest = netRates[netRates.length - 1] || { name: '', rate: 0 };
 
   const totalSocGain = sessions.reduce((s, x) => s + (x.endSoc - x.startSoc), 0);
   const cycles = totalSocGain / 100;
@@ -630,106 +217,57 @@ function buildOverview() {
   const estRange = Math.round(totalEnergy * 9.5);
   const dr = dateRange();
 
-  document.getElementById('period-badge').textContent = dr;
+  document.getElementById('period-badge').innerHTML = dr;
 
   document.getElementById('overview-content').innerHTML = `
     ${freeSessions.length > 0 ? `
-    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;gap:8px;align-items:center">
-      ${excludeFree ? `<span style="font-size:11px;color:var(--muted)">${freeSessions.length} unpaid session${freeSessions.length !== 1 ? 's' : ''} excluded</span>` : ''}
-      <button onclick="toggleFreeFilter()" class="filter-btn${excludeFree ? ' active' : ''}" style="font-size:11px">
-        ${excludeFree ? '🌐 Show All' : '💰 Paid Only'}
+    <p>
+      ${excludeFree ? `<small>${freeSessions.length} unpaid session${freeSessions.length !== 1 ? 's' : ''} excluded</small>` : ''}
+      <button onclick="toggleFreeFilter()">
+        ${excludeFree ? 'Show All' : 'Paid Only'}
       </button>
-    </div>` : ''}
-    <div class="grand-total">
-      <div class="gt-label">
-        <strong>Grand Total</strong>
-        ${sessions.length} session${sessions.length !== 1 ? 's' : ''} · ${dr}
-      </div>
-      <div class="gt-amount">₹${fmt(total)}</div>
-    </div>
+    </p>` : ''}
 
-    <div class="odo-card" id="odo-card">
-      <div class="gt-label">
-        <strong>Odometer</strong>
-        current reading
-      </div>
-      <div class="odo-value">${odometer.toLocaleString('en-IN')} km</div>
-    </div>
+    <h3>Grand Total: &#8377;${fmt(total)}</h3>
+    <p>${sessions.length} session${sessions.length !== 1 ? 's' : ''} &bull; ${dr}</p>
 
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-label">Total Energy</div><div class="stat-value">${totalEnergy.toFixed(1)}</div><div class="stat-sub">kWh charged</div></div>
-      <div class="stat-card"><div class="stat-label">Sessions</div><div class="stat-value">${sessions.length}</div><div class="stat-sub">total charges</div></div>
-      <div class="stat-card"><div class="stat-label">Avg Cost/kWh</div><div class="stat-value">₹${avgRate}</div><div class="stat-sub">blended rate</div></div>
-      <div class="stat-card"><div class="stat-label">Range Est.</div><div class="stat-value" style="font-size:15px">~${estRange.toLocaleString('en-IN')}</div><div class="stat-sub">km (@ 9.5 km/kWh)</div></div>
-      <div class="stat-card gold"><div class="stat-label">Most Expensive</div><div class="stat-value gold-text" style="font-size:15px">${dearest.name}</div><div class="stat-sub">₹${dearest.rate.toFixed(2)}/kWh</div></div>
-      <div class="stat-card green"><div class="stat-label">Cheapest</div><div class="stat-value" style="font-size:15px;color:var(--slow)">${cheapest.name}</div><div class="stat-sub">₹${cheapest.rate.toFixed(2)}/kWh</div></div>
-    </div>
+    <p><strong>Odometer:</strong> ${odometer.toLocaleString('en-IN')} km</p>
 
-    <div class="chart-card">
-      <div class="chart-title">Cost Split — Fast vs Slow Charging</div>
-      <div class="split-bar-wrap">
-        <div class="split-bar-labels">
-          <span class="label-fast">⚡ Fast ₹${fastCost.toFixed(2)} (${fc}%)</span>
-          <span class="label-slow">🌿 Slow ₹${slowCost.toFixed(2)} (${sc}%)</span>
-        </div>
-        <div class="split-bar">
-          <div class="split-bar-fast" style="width:${fc}%"></div>
-          <div class="split-bar-slow" style="width:${sc}%"></div>
-        </div>
-      </div>
-      <div class="split-bar-wrap" style="margin-top:14px">
-        <div class="chart-title" style="font-size:12px;margin-bottom:8px">Energy Split</div>
-        <div class="split-bar-labels">
-          <span class="label-fast">⚡ ${fastEnergy.toFixed(1)} kWh (${fe}%)</span>
-          <span class="label-slow">🌿 ${slowEnergy.toFixed(1)} kWh (${se}%)</span>
-        </div>
-        <div class="split-bar">
-          <div class="split-bar-fast" style="width:${fe}%"></div>
-          <div class="split-bar-slow" style="width:${se}%"></div>
-        </div>
-      </div>
-      <div style="margin-top:14px;display:flex;gap:16px;font-size:11px;color:var(--muted)">
-        <span>⚡ Fast: <strong style="color:var(--fast)">${fast.length}</strong></span>
-        <span>🌿 Slow: <strong style="color:var(--slow)">${slow.length}</strong></span>
-      </div>
-    </div>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Total Energy</td><td>${totalEnergy.toFixed(1)} kWh charged</td></tr>
+      <tr><td>Sessions</td><td>${sessions.length} total charges</td></tr>
+      <tr><td>Avg Cost/kWh</td><td>&#8377;${avgRate} blended rate</td></tr>
+      <tr><td>Range Est.</td><td>~${estRange.toLocaleString('en-IN')} km (@ 9.5 km/kWh)</td></tr>
+      <tr><td>Most Expensive</td><td>${dearest.name} &#8377;${dearest.rate.toFixed(2)}/kWh</td></tr>
+      <tr><td>Cheapest</td><td>${cheapest.name} &#8377;${cheapest.rate.toFixed(2)}/kWh</td></tr>
+    </table>
 
-    <div class="cycle-card">
-      <div class="cycle-header">
-        <div>
-          <div class="cycle-number">${cycles.toFixed(2)}</div>
-          <div class="cycle-unit">equivalent full cycles</div>
-        </div>
-        <div class="cycle-badge">${BATTERY_KWH} kWh battery</div>
-      </div>
-      <div class="cycle-bar-wrap">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Progress toward next full cycle</div>
-        <div class="cycle-bar-bg"><div class="cycle-bar-fill" style="width:${cyclePct}%"></div></div>
-        <div class="cycle-info">${cyclesFrac.toFixed(2)} of next cycle · ~${kwhRemaining} kWh to go</div>
-      </div>
-      <div class="cycle-note">
-        ℹ️ 1 cycle = 0→100% (${BATTERY_KWH} kWh). Rated ~1,000 cycles — you've used <strong>${(cycles / 10).toFixed(2)}%</strong> of total battery life.
-      </div>
-      <div style="margin-top:12px">
-        <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text)">Partial cycles by session</div>
-        ${sorted.map(s => {
-          const pct = ((s.endSoc - s.startSoc) / 100).toFixed(2);
-          const bw = Math.min(100, s.endSoc - s.startSoc);
-          return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <div style="font-size:10px;color:var(--muted);width:76px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${shortDate(s.date)}</div>
-            <div style="flex:1;height:6px;background:var(--surface2);border-radius:99px;overflow:hidden">
-              <div style="height:100%;width:${bw}%;background:${s.type === 'fast' ? '#ef4444' : '#22c55e'};border-radius:99px"></div>
-            </div>
-            <div style="font-size:11px;font-weight:700;color:${s.type === 'fast' ? 'var(--fast)' : 'var(--slow)'};width:36px;text-align:right">${pct}×</div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
+    <h3>Cost Split: Fast vs Slow Charging</h3>
+    <p>&#9889; Fast: &#8377;${fastCost.toFixed(2)} (${fc}%) &nbsp;|&nbsp; &#127807; Slow: &#8377;${slowCost.toFixed(2)} (${sc}%)</p>
+    <p>Energy split: &#9889; ${fastEnergy.toFixed(1)} kWh (${fe}%) &nbsp;|&nbsp; &#127807; ${slowEnergy.toFixed(1)} kWh (${se}%)</p>
+    <p>&#9889; Fast sessions: <strong>${fast.length}</strong> &nbsp;|&nbsp; &#127807; Slow sessions: <strong>${slow.length}</strong></p>
 
-    <div class="chart-card">
-      <div class="chart-title">Running Cost Over Time (₹)</div>
-      <div class="chart-wrap" style="height:200px"><canvas id="runningCostChart"></canvas></div>
-    </div>
+    <h3>Battery Cycles: ${cycles.toFixed(2)} equivalent full cycles</h3>
+    <p>Battery: ${BATTERY_KWH} kWh &bull; Progress toward next cycle: ${cyclePct}%</p>
+    <p>${cyclesFrac.toFixed(2)} of next cycle &bull; ~${kwhRemaining} kWh to go</p>
+    <p><small>1 cycle = 0&#8594;100% (${BATTERY_KWH} kWh). Rated ~1,000 cycles. Used <strong>${(cycles / 10).toFixed(2)}%</strong> of total battery life.</small></p>
+
+    <h4>Partial cycles by session:</h4>
+    <table border="1" cellpadding="4" cellspacing="0">
+      <tr><th>Date</th><th>Type</th><th>Cycle fraction</th></tr>
+      ${sorted.map(s => {
+        const pct = ((s.endSoc - s.startSoc) / 100).toFixed(2);
+        return `<tr>
+          <td>${shortDate(s.date)}</td>
+          <td>${s.type === 'fast' ? '&#9889; Fast' : '&#127807; Slow'}</td>
+          <td>${pct}&times;</td>
+        </tr>`;
+      }).join('')}
+    </table>
+
+    <h3>Running Cost Over Time (&#8377;)</h3>
+    <div style="width:100%;max-width:600px"><canvas id="runningCostChart" height="200"></canvas></div>
   `;
 
   if (!sorted.length) return;
@@ -741,10 +279,9 @@ function buildOverview() {
       labels: sorted.map(s => shortDate(s.date)),
       datasets: [{
         data: runData,
-        borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
-        borderWidth: 2.5,
-        pointBackgroundColor: sorted.map(s => s.type === 'fast' ? '#ef4444' : '#22c55e'),
-        pointBorderColor: '#fff', pointBorderWidth: 1.5, pointRadius: 5,
+        borderColor: '#000', backgroundColor: 'rgba(0,0,0,0.05)',
+        borderWidth: 2,
+        pointRadius: 4,
         fill: true, tension: 0.35
       }]
     },
@@ -752,8 +289,7 @@ function buildOverview() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { color: '#1e2535' }, ticks: { maxRotation: 45 } },
-        y: { grid: { color: '#1e2535' }, ticks: { callback: v => '₹' + v.toLocaleString('en-IN') } }
+        y: { ticks: { callback: v => '&#8377;' + v.toLocaleString('en-IN') } }
       }
     }
   });
@@ -766,10 +302,7 @@ function buildSessionCards(filter) {
   const visible = filter === 'all' ? sorted : sorted.filter(s => s.type === filter);
 
   if (!visible.length) {
-    list.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--muted)">
-      <div style="font-size:48px;margin-bottom:12px">⚡</div>
-      <div style="font-size:16px;font-weight:600;color:var(--text)">No sessions yet</div>
-    </div>`;
+    list.innerHTML = `<p>No sessions yet.</p>`;
     return;
   }
 
@@ -781,49 +314,35 @@ function buildSessionCards(filter) {
   const hasMore = loadedCount < visible.length;
 
   function cardHtml(s) {
-    const socW = s.endSoc - s.startSoc;
     const er = effRate(s);
     const pc = ((s.endSoc - s.startSoc) / 100).toFixed(2);
-    const typeBadge = s.type === 'fast' ? 'badge-fast' : 'badge-slow';
-    const typeLabel = s.type === 'fast' ? '⚡ Fast DC' : '🌿 Slow AC';
+    const typeLabel = s.type === 'fast' ? '&#9889; Fast DC' : '&#127807; Slow AC';
     const runningTotal = runByIdx.get(s) || 0;
-    return `<div class="session-card ${s.type}">
-      <div class="session-header">
-        <div class="session-name">${s.displayName}</div>
-        <div class="session-cost">₹${s.cost.toFixed(2)}</div>
-      </div>
-      <div class="session-meta">
-        ${s.chargerKw ? `<span class="badge ${typeBadge}">${s.chargerKw} kW</span>` : `<span class="badge ${typeBadge}">${typeLabel}</span>`}
-        ${s.free ? '<span class="badge" style="background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3)">🆓 FREE</span>' : ''}
-        <span class="badge badge-date">📅 ${isoToDisplay(s.date)}</span>
-      </div>
-      <div class="soc-wrap">
-        <div class="soc-labels">
-          <span>Start: <strong>${s.startSoc}%</strong></span>
-          <span style="color:${s.type === 'fast' ? 'var(--fast)' : 'var(--slow)'}">+${s.endSoc - s.startSoc}%</span>
-          <span>End: <strong>${s.endSoc}%</strong></span>
-        </div>
-        <div style="height:10px;border-radius:99px;background:var(--surface2);position:relative">
-          <div style="left:${s.startSoc}%;width:${socW}%;position:absolute;top:0;height:100%;border-radius:99px;background:${s.type === 'fast' ? 'linear-gradient(90deg,#dc2626,#f87171)' : 'linear-gradient(90deg,#16a34a,#4ade80)'}"></div>
-        </div>
-      </div>
-      <div class="session-details">
-        <div class="detail-pill"><strong>${s.energy} kWh</strong>Energy</div>
-        <div class="detail-pill"><strong>₹${er.toFixed(2)}</strong>per kWh</div>
-        <div class="detail-pill"><strong>${pc}×</strong>cycle</div>
-        ${s.time ? `<div class="detail-pill"><strong>${formatTime(s.time)}</strong>Time</div>` : ''}
-      </div>
-      <div style="margin-top:8px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between">
-        <span>${s.rate || '—'}</span>
-        <span>Running: ₹${runningTotal.toFixed(2)}</span>
-      </div>
-    </div>`;
+    return `<fieldset>
+      <legend><strong>${s.displayName}</strong> &#8377;${s.cost.toFixed(2)}</legend>
+      <p>
+        ${s.chargerKw ? `${s.chargerKw} kW` : typeLabel}
+        ${s.free ? ' | <strong>FREE</strong>' : ''}
+        | ${isoToDisplay(s.date)}
+        ${s.time ? ' | ' + formatTime(s.time) : ''}
+      </p>
+      <p>SOC: ${s.startSoc}% &#8594; ${s.endSoc}% (+${s.endSoc - s.startSoc}%)</p>
+      <table border="1" cellpadding="4" cellspacing="0">
+        <tr>
+          <th>Energy</th><th>&#8377;/kWh</th><th>Cycle</th>
+        </tr>
+        <tr>
+          <td>${s.energy} kWh</td>
+          <td>&#8377;${er.toFixed(2)}</td>
+          <td>${pc}&times;</td>
+        </tr>
+      </table>
+      <p><small>Rate: ${s.rate || '-'} &nbsp;|&nbsp; Running total: &#8377;${runningTotal.toFixed(2)}</small></p>
+    </fieldset>`;
   }
 
   list.innerHTML = toShow.map(cardHtml).join('') +
-    `<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0">
-       Showing ${toShow.length} of ${visible.length}
-     </div>` +
+    `<p><small>Showing ${toShow.length} of ${visible.length}</small></p>` +
     (hasMore ? `<div id="scroll-sentinel" style="height:1px"></div>` : '');
 
   if (hasMore) {
@@ -843,17 +362,16 @@ function updateFilterCounts() {
   const f = sessions.filter(s => s.type === 'fast').length;
   const sl = sessions.filter(s => s.type === 'slow').length;
   document.getElementById('filter-all').textContent = `All (${sessions.length})`;
-  document.getElementById('filter-fast').textContent = `⚡ Fast (${f})`;
-  document.getElementById('filter-slow').textContent = `🌿 Slow (${sl})`;
+  document.getElementById('filter-fast').textContent = `Fast (${f})`;
+  document.getElementById('filter-slow').textContent = `Slow (${sl})`;
 }
 
 // ── TABS ───────────────────────────────────────────────────────────────────────
 function showTab(name) {
   currentTab = name;
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  event.target.classList.add('active');
+  ['overview','sessions','analytics'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === name ? '' : 'none';
+  });
   if (name === 'analytics') buildAnalyticsCharts();
 }
 
@@ -861,8 +379,6 @@ function showTab(name) {
 function filterSessions(type, btn) {
   currentFilter = type;
   loadedCount = SESSIONS_PER_PAGE;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
   buildSessionCards(type);
 }
 
@@ -879,8 +395,7 @@ function buildAnalyticsCharts() {
 
   const sorted = sortedSessionsAsc();
   if (!sorted.length) {
-    document.getElementById('analytics-content').innerHTML =
-      '<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:13px">No data to display</div>';
+    document.getElementById('analytics-content').innerHTML = '<p>No data to display.</p>';
     return;
   }
 
@@ -893,8 +408,6 @@ function buildAnalyticsCharts() {
   const nets = Object.entries(netMap)
     .map(([n, v]) => ({ name: n, rate: v.energy > 0 ? v.cost / v.energy : 0, cost: v.cost, type: v.type }))
     .sort((a, b) => a.rate - b.rate);
-  const netColors = nets.map(n => n.type === 'slow' ? '#22c55e' : '#ef4444');
-  const donutPalette = ['#22c55e', '#4ade80', '#3b82f6', '#f97316', '#ef4444', '#a855f7', '#eab308', '#06b6d4'];
 
   const fast = sessions.filter(s => s.type === 'fast');
   const slow = sessions.filter(s => s.type === 'slow');
@@ -904,83 +417,61 @@ function buildAnalyticsCharts() {
   const slowE = slow.reduce((s, x) => s + x.energy, 0);
   const fastRate = fastE > 0 ? fastCost / fastE : 0;
   const slowRate = slowE > 0 ? slowCost / slowE : 0;
-  const ratio = slowRate > 0 ? (fastRate / slowRate).toFixed(1) : '—';
+  const ratio = slowRate > 0 ? (fastRate / slowRate).toFixed(1) : '-';
   const totalCost = fastCost + slowCost;
 
   document.getElementById('analytics-content').innerHTML = `
-    <div class="chart-card">
-      <div class="chart-title">Cost per kWh by Network (₹/kWh eff.)</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="rateChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Energy Charged per Session (kWh)</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="energyChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">SOC Increase per Session (%)</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="socChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Cost Breakdown by Network</div>
-      <div class="chart-wrap" style="height:260px"><canvas id="donutChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Fast vs Slow — Head to Head</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <tr style="color:var(--muted);font-size:11px;text-transform:uppercase">
-          <td style="padding:6px 0">Metric</td>
-          <td style="text-align:center;padding:6px 4px;color:var(--fast)">⚡ Fast</td>
-          <td style="text-align:center;padding:6px 4px;color:var(--slow)">🌿 Slow</td>
-        </tr>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0;color:var(--muted)">Sessions</td><td style="text-align:center;color:var(--fast);font-weight:700">${fast.length}</td><td style="text-align:center;color:var(--slow);font-weight:700">${slow.length}</td></tr>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0;color:var(--muted)">Total Cost</td><td style="text-align:center;color:var(--fast);font-weight:700">₹${fastCost.toFixed(2)}</td><td style="text-align:center;color:var(--slow);font-weight:700">₹${slowCost.toFixed(2)}</td></tr>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0;color:var(--muted)">Energy</td><td style="text-align:center;color:var(--fast);font-weight:700">${fastE.toFixed(1)} kWh</td><td style="text-align:center;color:var(--slow);font-weight:700">${slowE.toFixed(1)} kWh</td></tr>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0;color:var(--muted)">Avg ₹/kWh</td><td style="text-align:center;color:var(--fast);font-weight:700">₹${fastRate.toFixed(2)}</td><td style="text-align:center;color:var(--slow);font-weight:700">₹${slowRate.toFixed(2)}</td></tr>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 0;color:var(--muted)">Cost Ratio</td><td colspan="2" style="text-align:center;font-weight:700"><span style="color:var(--fast)">Fast is ${ratio}×</span> <span style="color:var(--muted)">more expensive</span></td></tr>
-      </table>
-    </div>
+    <h3>Cost per kWh by Network (&#8377;/kWh eff.)</h3>
+    <div style="max-width:600px"><canvas id="rateChart" height="200"></canvas></div>
+
+    <h3>Energy Charged per Session (kWh)</h3>
+    <div style="max-width:600px"><canvas id="energyChart" height="200"></canvas></div>
+
+    <h3>SOC Increase per Session (%)</h3>
+    <div style="max-width:600px"><canvas id="socChart" height="200"></canvas></div>
+
+    <h3>Cost Breakdown by Network</h3>
+    <div style="max-width:400px"><canvas id="donutChart" height="300"></canvas></div>
+
+    <h3>Fast vs Slow: Head to Head</h3>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <tr><th>Metric</th><th>&#9889; Fast</th><th>&#127807; Slow</th></tr>
+      <tr><td>Sessions</td><td>${fast.length}</td><td>${slow.length}</td></tr>
+      <tr><td>Total Cost</td><td>&#8377;${fastCost.toFixed(2)}</td><td>&#8377;${slowCost.toFixed(2)}</td></tr>
+      <tr><td>Energy</td><td>${fastE.toFixed(1)} kWh</td><td>${slowE.toFixed(1)} kWh</td></tr>
+      <tr><td>Avg &#8377;/kWh</td><td>&#8377;${fastRate.toFixed(2)}</td><td>&#8377;${slowRate.toFixed(2)}</td></tr>
+      <tr><td>Cost Ratio</td><td colspan="2">Fast is ${ratio}&times; more expensive</td></tr>
+    </table>
   `;
 
   charts.rate = new Chart(document.getElementById('rateChart'), {
     type: 'bar',
-    data: { labels: nets.map(n => n.name), datasets: [{ data: nets.map(n => n.rate), backgroundColor: netColors, borderRadius: 6, borderSkipped: false }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#1e2535' }, ticks: { callback: v => '₹' + v.toFixed(0) } } } }
+    data: { labels: nets.map(n => n.name), datasets: [{ data: nets.map(n => n.rate), backgroundColor: '#ccc', borderColor: '#000', borderWidth: 1 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => '₹' + v.toFixed(0) } } } }
   });
 
   charts.energy = new Chart(document.getElementById('energyChart'), {
     type: 'bar',
-    data: { labels: sorted.map(s => shortDate(s.date)), datasets: [{ data: sorted.map(s => s.energy), backgroundColor: sorted.map(s => s.type === 'fast' ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)'), borderColor: sorted.map(s => s.type === 'fast' ? '#ef4444' : '#22c55e'), borderWidth: 1.5, borderRadius: 6, borderSkipped: false }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' kWh' } } }, scales: { x: { grid: { display: false }, ticks: { maxRotation: 45 } }, y: { grid: { color: '#1e2535' }, ticks: { callback: v => v + ' kWh' } } } }
+    data: { labels: sorted.map(s => shortDate(s.date)), datasets: [{ data: sorted.map(s => s.energy), backgroundColor: '#ccc', borderColor: '#000', borderWidth: 1 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' kWh' } } }, scales: { x: { ticks: { maxRotation: 45 } }, y: { ticks: { callback: v => v + ' kWh' } } } }
   });
 
   charts.soc = new Chart(document.getElementById('socChart'), {
     type: 'bar',
-    data: { labels: sorted.map(s => shortDate(s.date)), datasets: [{ data: sorted.map(s => s.endSoc - s.startSoc), backgroundColor: sorted.map(s => s.type === 'fast' ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)'), borderColor: sorted.map(s => s.type === 'fast' ? '#ef4444' : '#22c55e'), borderWidth: 1.5, borderRadius: 6, borderSkipped: false }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '+' + ctx.raw + '%' } } }, scales: { x: { grid: { display: false }, ticks: { maxRotation: 45 } }, y: { grid: { color: '#1e2535' }, ticks: { callback: v => v + '%' } } } }
+    data: { labels: sorted.map(s => shortDate(s.date)), datasets: [{ data: sorted.map(s => s.endSoc - s.startSoc), backgroundColor: '#ccc', borderColor: '#000', borderWidth: 1 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '+' + ctx.raw + '%' } } }, scales: { x: { ticks: { maxRotation: 45 } }, y: { ticks: { callback: v => v + '%' } } } }
   });
 
   charts.donut = new Chart(document.getElementById('donutChart'), {
     type: 'doughnut',
-    data: { labels: nets.map(n => n.name), datasets: [{ data: nets.map(n => n.cost), backgroundColor: donutPalette.slice(0, nets.length), borderColor: '#161b26', borderWidth: 3, hoverOffset: 8 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true, pointStyleWidth: 8 } }, tooltip: { callbacks: { label: ctx => `₹${ctx.raw.toFixed(2)} (${totalCost > 0 ? ((ctx.raw / totalCost) * 100).toFixed(1) : 0}%)` } } } }
+    data: { labels: nets.map(n => n.name), datasets: [{ data: nets.map(n => n.cost), borderWidth: 1 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: ctx => `&#8377;${ctx.raw.toFixed(2)} (${totalCost > 0 ? ((ctx.raw / totalCost) * 100).toFixed(1) : 0}%)` } } } }
   });
-}
-
-// ── TOAST ──────────────────────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg, type = 'success') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `toast ${type} show`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
 }
 
 // ── LOADING ────────────────────────────────────────────────────────────────────
 function hideLoading() {
-  const el = document.getElementById('loading-overlay');
-  el.style.opacity = '0';
-  setTimeout(() => el.style.display = 'none', 300);
+  document.getElementById('loading-overlay').style.display = 'none';
 }
 </script>
 </body>
