@@ -1,5 +1,5 @@
 {
-  "odometer": 1982,
+  "odometer": 2320,
   "sessions": [
     {
       "date": "2026-06-23",
@@ -196,6 +196,34 @@
       "network": "BESCOM",
       "chargerKw": 3.3,
       "free": false
+    },
+    {
+      "date": "2026-07-17",
+      "time": "10:17",
+      "displayName": "SAP Whitefield Office Charging",
+      "type": "slow",
+      "startSoc": 36,
+      "endSoc": 83,
+      "energy": 16.45,
+      "cost": 142.29,
+      "rate": "₹8.65/kWh",
+      "network": "BESCOM",
+      "chargerKw": 3.3,
+      "free": true
+    },
+    {
+      "date": "2026-07-27",
+      "time": "08:31",
+      "displayName": "SAP Devanahalli Office Charging",
+      "type": "slow",
+      "startSoc": 19,
+      "endSoc": 100,
+      "energy": 28.35,
+      "cost": 245.23,
+      "rate": "₹8.65/kWh",
+      "network": "BESCOM",
+      "chargerKw": 7.6,
+      "free": true
     }
   ]
 }
