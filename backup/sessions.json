@@ -1,5 +1,5 @@
 {
-  "odometer": 5721,
+  "odometer": 5943,
   "sessions": [
     {
       "date": "2026-06-23",
@@ -546,6 +546,34 @@
       "network": "Zeon",
       "chargerKw": 100,
       "free": false
+    },
+    {
+      "date": "2026-09-29",
+      "time": "17:26",
+      "displayName": "GO EC TN SALEM OMALUR ANNAMAR PLAZA",
+      "type": "fast",
+      "startSoc": 39,
+      "endSoc": 83,
+      "energy": 19.8,
+      "cost": 595.78,
+      "rate": "₹25.50/kWh + 18% GST",
+      "network": "GO EC",
+      "chargerKw": 80,
+      "free": false
+    },
+    {
+      "date": "2026-09-30",
+      "time": "17:10",
+      "displayName": "SAP Whitefield Office Charging",
+      "type": "slow",
+      "startSoc": 10,
+      "endSoc": 69,
+      "energy": 20.65,
+      "cost": 178.62,
+      "rate": "₹8.65/kWh",
+      "network": "BESCOM",
+      "chargerKw": 7.4,
+      "free": true
     }
   ]
 }
